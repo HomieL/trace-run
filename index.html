@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>trace.run — interview algorithms, step by step</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1fa; --grid:rgba(40,52,120,.07); --panel:#ffffff; --panel-2:#f3f5fc; --border:#d6dcef; --screen:#1b2150;
+  --text:#141a3a; --muted:#56608a; --dim:#9aa3c7;
+  --cyan:#0a8fb0; --mint:#119a64; --amber:#b77a00; --coral:#d9483b; --violet:#6b4fd8; --pink:#c43a86;
+  --k:#6b4fd8; --f:#0a7fa0; --n:#b77a00; --c:#119a64; --s:#8790b8;
+  --ph:var(--cyan);
+  --ui:"Sora", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1030; --grid:rgba(120,140,255,.07); --panel:#131a45; --panel-2:#19215a; --border:#26307a; --screen:#070a22;
+    --text:#e6e9ff; --muted:#a3aad6; --dim:#5b64a3;
+    --cyan:#4fd8f5; --mint:#4ee6a1; --amber:#ffc24d; --coral:#ff7a6b; --violet:#a994ff; --pink:#ff7cc4;
+    --k:#a994ff; --f:#4fd8f5; --n:#ffc24d; --c:#4ee6a1; --s:#6c75b5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1030; --grid:rgba(120,140,255,.07); --panel:#131a45; --panel-2:#19215a; --border:#26307a; --screen:#070a22;
+  --text:#e6e9ff; --muted:#a3aad6; --dim:#5b64a3;
+  --cyan:#4fd8f5; --mint:#4ee6a1; --amber:#ffc24d; --coral:#ff7a6b; --violet:#a994ff; --pink:#ff7cc4;
+  --k:#a994ff; --f:#4fd8f5; --n:#ffc24d; --c:#4ee6a1; --s:#6c75b5;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; font-family:var(--ui); color:var(--text); background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px; font-size:15px; line-height:1.55; padding-bottom:96px;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 18px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-bottom:18px}
+.brand{font-family:var(--mono);font-weight:700;font-size:20px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px;margin-right:auto}
+.brand .cursor{display:inline-block;width:10px;height:20px;background:var(--cyan);animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.lib{display:flex;gap:6px;align-items:center}
+.select{border:1px solid var(--border);background:var(--panel);border-radius:10px;height:40px;padding:0 10px;font-size:14px;max-width:240px}
+.ghost{border:0;background:transparent;color:var(--muted);font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.btn-new{border:1.5px solid var(--cyan);background:color-mix(in srgb,var(--cyan) 12%,transparent);color:var(--cyan);border-radius:10px;height:40px;padding:0 14px;font-weight:600;font-size:14px;cursor:pointer}
+.btn-new:hover{background:color-mix(in srgb,var(--cyan) 22%,transparent)}
+
+.titlebar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 20px;margin-bottom:14px}
+.problem{flex:1;min-width:220px;font-size:24px;font-weight:600;letter-spacing:-.015em;line-height:1.25}
+.problem small{display:block;font-size:14px;font-weight:400;color:var(--muted);margin-top:4px;max-width:70ch}
+.loader{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:6px 6px 6px 12px}
+.loader label{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.loader input{width:min(340px,52vw);border:0;background:transparent;font-family:var(--mono);font-size:14px;padding:6px 4px}
+.loader input:focus{outline:none}
+.loader button{border:0;background:var(--panel-2);border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:13px}
+.err{font-size:13px;color:var(--coral);margin:-6px 0 10px}
+.err:empty{display:none}
+
+/* cards */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;min-width:0}
+.card h2{font-size:14px;font-weight:600;margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card h2 .aside{font-weight:400;color:var(--muted);font-size:12.5px}
+
+/* compose */
+.compose{margin-bottom:14px;border-color:var(--cyan)}
+.compose textarea{width:100%;min-height:220px;resize:vertical;font-family:var(--mono);font-size:13.5px;line-height:1.6;background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:12px;tab-size:4}
+.compose .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.compose input{flex:1;min-width:220px;height:42px;border:1px solid var(--border);background:var(--panel-2);border-radius:10px;padding:0 12px;font-family:var(--mono);font-size:13.5px}
+.status{margin:10px 0 0;font-size:14px;color:var(--muted);min-height:1.4em}
+.status.bad{color:var(--coral)}
+.status.work::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-right:8px;animation:pulse 1s ease-in-out infinite alternate}
+@keyframes pulse{to{opacity:.2}}
+
+/* pattern scan */
+.scan{margin-bottom:14px;display:grid;grid-template-columns:auto 1fr;gap:10px 18px;align-items:center}
+.scan h2{margin:0}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{--tc:var(--cyan);border:1px solid color-mix(in srgb,var(--tc) 45%,transparent);background:color-mix(in srgb,var(--tc) 10%,transparent);color:var(--tc);font-family:var(--mono);font-size:13px;font-weight:500;padding:5px 11px;border-radius:999px;cursor:pointer}
+.tag:hover{background:color-mix(in srgb,var(--tc) 20%,transparent)}
+.tag[aria-pressed="true"]{background:var(--tc);color:var(--panel)}
+.tag.cx{--tc:var(--muted);cursor:default;background:transparent}
+.why{grid-column:1/-1;margin:0;font-size:14px;color:var(--muted);min-height:1.5em}
+.why b{color:var(--text);font-weight:600}
+
+/* grid */
+.main{display:flex;gap:14px;align-items:flex-start}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.col.left{flex:1 1 0}.col.right{flex:1.2 1 0}
+
+
+
+/* code */
+.file{font-family:var(--mono);font-size:12.5px;color:var(--muted);font-weight:400}
+.code{font-family:var(--mono);font-size:13.5px;line-height:1.95;overflow-x:auto;border-radius:10px;background:var(--panel-2);padding:8px 0}
+.ln{display:flex;border-left:3px solid transparent}
+.ln .no{flex:0 0 2.8em;text-align:right;padding-right:1em;color:var(--dim);user-select:none}
+.ln .src{white-space:pre;padding-right:1.2em}
+.ln.seen .no{color:var(--muted)}
+.ln.ev{background:color-mix(in srgb,var(--tagc) 12%,transparent);border-left-color:color-mix(in srgb,var(--tagc) 60%,transparent)}
+.ln.active{background:color-mix(in srgb,var(--ph) 20%,transparent);border-left-color:var(--ph)}
+.ln.active .no{color:var(--ph);font-weight:700}
+.t-k{color:var(--k)}.t-f{color:var(--f)}.t-n{color:var(--n)}.t-c{color:var(--c)}.t-s{color:var(--s)}
+
+/* explain + narrator */
+.explain{border-color:color-mix(in srgb,var(--ph) 55%,var(--border));box-shadow:0 0 0 1px color-mix(in srgb,var(--ph) 18%,transparent)}
+.ex-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.phase{background:var(--ph);color:var(--panel);font-weight:700;font-size:13px;padding:3px 12px;border-radius:999px}
+.stepno{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-left:auto}
+.narr{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.bit{width:60px;height:60px;flex:0 0 60px;overflow:visible}
+.bit .head{fill:var(--panel-2);stroke:var(--ph);stroke-width:2.5}
+.bit .screen{fill:var(--screen)}
+.bit .eye{fill:var(--ph);animation:blinkEye 4.5s infinite;transform-box:fill-box;transform-origin:center}
+.bit .mouth{fill:var(--ph);transform-box:fill-box;transform-origin:center}
+.bit .ant{stroke:var(--ph);stroke-width:2.5}
+.bit .tip{fill:var(--ph)}
+.bit .base{fill:var(--ph);opacity:.5}
+.bit.talking .mouth{animation:talk .2s ease-in-out infinite alternate}
+.bit.hop{animation:hop .35s ease-out}
+@keyframes blinkEye{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes talk{from{transform:scaleY(1)}to{transform:scaleY(2.6)}}
+@keyframes hop{40%{transform:translateY(-5px)}}
+.bubble{position:relative;flex:1;background:var(--panel-2);border:1px solid var(--border);border-radius:14px;padding:10px 14px;font-size:15px;min-height:48px}
+.bubble::before{content:"";position:absolute;left:-7px;top:20px;width:12px;height:12px;background:var(--panel-2);border-left:1px solid var(--border);border-bottom:1px solid var(--border);transform:rotate(45deg)}
+.bubble .who{display:block;font-size:12px;color:var(--ph);font-weight:600;margin-bottom:2px}
+.ex-title{font-size:21px;font-weight:600;letter-spacing:-.015em;margin:0 0 6px;line-height:1.25}
+.ex-desc{margin:0 0 12px;font-size:15px;max-width:62ch}
+.ex-desc code,.role code,.why code{font-family:var(--mono);font-size:.9em;background:var(--panel-2);padding:1px 5px;border-radius:5px}
+.cond{font-family:var(--mono);font-size:14px;background:var(--panel-2);border:1px dashed color-mix(in srgb,var(--ph) 60%,transparent);border-radius:8px;padding:8px 12px;margin:0 0 12px;display:inline-block}
+.role{font-size:13.5px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px;margin:0}
+.role strong{color:var(--text);font-weight:600}
+
+/* variables */
+.var{margin-bottom:14px}
+.var:last-child{margin-bottom:0}
+.var-name{font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.var-name .vn{color:var(--text);font-weight:500}
+.var.changed .vn{color:var(--ph)}
+.var.changed .vn::after{content:" changed";font-family:var(--ui);font-size:11px;font-weight:600;margin-left:6px;padding:1px 7px;border-radius:99px;background:color-mix(in srgb,var(--ph) 18%,transparent)}
+.ptrs{color:var(--cyan)}
+.cells{display:flex;flex-wrap:wrap;gap:6px;min-height:40px;align-items:flex-start}
+.cells.has-ptr{padding-bottom:20px}
+.cell{font-family:var(--mono);font-weight:700;min-width:40px;height:40px;padding:0 8px;display:grid;place-items:center;border-radius:9px;border:1.5px solid var(--border);background:var(--panel-2);position:relative}
+.cell .idx{position:absolute;top:-8px;right:-6px;font-size:10px;font-weight:500;background:var(--panel);border:1px solid var(--border);border-radius:5px;padding:0 4px;line-height:1.4;color:var(--muted)}
+.cell .ptr{position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--cyan);white-space:nowrap}
+.cell.cur{border-color:var(--cyan);background:color-mix(in srgb,var(--cyan) 16%,transparent);color:var(--cyan)}
+.cell.pop,.chip.pop{animation:pop .35s ease-out}
+@keyframes pop{0%{transform:scale(.6);opacity:.3}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:13.5px;border:1.5px solid var(--border);background:var(--panel-2);border-radius:8px;padding:4px 10px}
+.chip.big{font-size:16px;font-weight:700;padding:6px 14px}
+.empty{font-family:var(--mono);color:var(--dim);font-size:14px;line-height:40px}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}
+.slot{font-family:var(--mono);font-size:13px;min-height:36px;padding:4px;border-radius:8px;border:1.5px dashed var(--border);display:grid;place-items:center;color:var(--dim);text-align:center}
+.slot.got{border-style:solid;border-color:color-mix(in srgb,var(--pink) 55%,transparent);background:color-mix(in srgb,var(--pink) 10%,transparent);color:var(--text);font-weight:500}
+.slot.new{animation:pop .4s ease-out;border-color:var(--pink);box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 25%,transparent)}
+.quest{font-family:var(--ui);color:var(--pink);font-weight:600}
+
+/* stack */
+.frames{display:flex;flex-direction:column;gap:6px}
+.frame{font-family:var(--mono);font-size:13.5px;border:1.5px solid var(--border);border-radius:9px;padding:7px 12px;background:var(--panel-2);overflow-wrap:anywhere}
+.frame.top{border-color:var(--cyan);background:color-mix(in srgb,var(--cyan) 14%,transparent)}
+.frame.root{border-style:dashed;color:var(--muted)}
+
+/* tree */
+.tree-wrap{overflow-x:auto}
+.tree-wrap svg{display:block;width:100%;min-width:480px;height:auto}
+.edge{stroke:var(--border);stroke-width:1.6;fill:none}
+.edge.seen{stroke:var(--dim)}
+.edge.path{stroke:var(--cyan);stroke-width:3}
+.elabel{font-family:var(--mono);font-size:11px;fill:var(--dim)}
+.elabel.take{fill:var(--mint)}
+.elabel.path{fill:var(--cyan);font-weight:700}
+.node circle{fill:var(--panel);stroke:var(--border);stroke-width:1.6}
+.node text{font-family:var(--mono);font-size:12px;fill:var(--dim);text-anchor:middle;dominant-baseline:central;font-weight:700}
+.node.done circle{fill:var(--panel-2);stroke:var(--dim)}
+.node.done text{fill:var(--muted)}
+.node.stack circle{stroke:var(--cyan);stroke-width:2.5}
+.node.stack text{fill:var(--cyan)}
+.node.active circle{fill:var(--ph);stroke:var(--ph);stroke-width:2.5}
+.node.active text{fill:var(--panel)}
+.halo{fill:none;stroke:var(--ph);stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center}
+.node.active .halo{opacity:1;animation:halo 1.4s ease-out infinite}
+@keyframes halo{0%{transform:scale(1);stroke-opacity:.8}100%{transform:scale(1.8);stroke-opacity:0}}
+.node.leaf circle{fill:color-mix(in srgb,var(--pink) 22%,var(--panel));stroke:var(--pink)}
+.node.leaf text{fill:var(--pink)}
+.llabel{font-family:var(--mono);fill:var(--dim);text-anchor:middle}
+.llabel.got{fill:var(--pink);font-weight:700}
+.depth{font-family:var(--mono);font-size:11.5px;fill:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:2px solid var(--c)}
+.legend .l1{--c:var(--cyan)}.legend .l2{--c:var(--dim)}.legend .l3{--c:var(--pink)}
+
+
+.ret{font-family:var(--mono);font-size:11px;font-weight:700;fill:var(--amber)}
+.node.pruned circle{fill:color-mix(in srgb,var(--coral) 12%,var(--panel));stroke:var(--coral);stroke-dasharray:3 3}
+.node.pruned text{fill:var(--coral)}
+.edge.pruned{stroke:var(--coral);stroke-dasharray:4 4}
+.elabel.pruned{fill:var(--coral)}
+.node.inq circle{stroke:var(--cyan);stroke-width:2.5;stroke-dasharray:4 3}
+.node.inq text{fill:var(--cyan)}
+.node.lvl circle{fill:color-mix(in srgb,var(--tc) 30%,var(--panel));stroke:var(--tc)}
+.node.lvl text{fill:var(--text)}
+.node.taken circle{fill:color-mix(in srgb,var(--mint) 28%,var(--panel));stroke:var(--mint)}
+.node.taken text{fill:var(--text)}
+.legend span::before{border-color:var(--c)}
+/* grid viz */
+.gv{display:grid;gap:5px;align-items:center;justify-content:start}
+.gh{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center}
+.gcell{aspect-ratio:1;border-radius:9px;border:1.5px solid var(--border);display:grid;place-items:center;position:relative;font-family:var(--mono);font-size:14px;background:var(--panel-2)}
+.gcell b{font-weight:700}
+.gcell i{position:absolute;bottom:1px;right:4px;font-style:normal;font-size:10px;color:var(--muted)}
+.gcell.land{background:color-mix(in srgb,var(--amber) 24%,var(--panel));border-color:color-mix(in srgb,var(--amber) 60%,transparent)}
+.gcell.water{background:color-mix(in srgb,var(--cyan) 6%,var(--panel));color:var(--dim)}
+.gcell.sunk{background:color-mix(in srgb,var(--tc) 30%,var(--panel));border-color:var(--tc)}
+.gcell.sunk i{color:var(--text);font-weight:600}
+.gcell.gempty{border-style:dashed;background:transparent}
+.gcell.fresh::before,.gcell.rotten::before{content:"";width:54%;height:54%;border-radius:50%;background:var(--amber)}
+.gcell.rotten::before{background:color-mix(in srgb,var(--coral) 65%,#4a2e14)}
+.gcell.inq{border-color:var(--cyan);border-width:2.5px}
+.gcell.gscan{box-shadow:0 0 0 2px var(--muted)}
+.gcell.path{outline:2px solid var(--cyan);outline-offset:1px}
+.gcell.probe{outline:3px dashed var(--coral);outline-offset:2px}
+.gcell.cur{outline:3px solid var(--ph);outline-offset:2px}
+/* intervals viz */
+.ibar{fill:var(--panel-2);stroke:var(--border);stroke-width:1.5}
+.ibar.grp{fill:color-mix(in srgb,var(--tc) 30%,var(--panel));stroke:var(--tc)}
+.ibar.cur{fill:var(--ph);stroke:var(--ph)}
+.obar{fill:color-mix(in srgb,var(--tc) 50%,var(--panel));stroke:var(--tc);stroke-width:1.5}
+.ilabel{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.ilabel.strong{fill:var(--text);font-weight:600}
+.lastend{stroke:var(--amber);stroke-width:2;stroke-dasharray:5 4}
+.lastend-t{font-family:var(--mono);font-size:11px;fill:var(--amber);font-weight:700}
+.axis{stroke:var(--dim);stroke-width:1}
+/* graph viz */
+.gedge{stroke:var(--dim);stroke-width:1.8;fill:none}
+.gedge.hidden{opacity:0}
+.gedge.hot{stroke:var(--ph);stroke-width:3}
+.ahp{fill:var(--dim)}.ahh{fill:var(--ph)}
+.badge circle{fill:var(--amber)}
+.badge.zero circle{fill:var(--mint)}
+.badge text{font-family:var(--mono);font-size:10px;font-weight:700;fill:var(--panel);text-anchor:middle;dominant-baseline:central}
+.order{font-family:var(--mono);font-size:11px;fill:var(--mint);text-anchor:middle;font-weight:700}
+/* dock */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.dock-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:8px}
+.btn{border:1px solid var(--border);background:var(--panel-2);border-radius:10px;height:42px;min-width:42px;padding:0 12px;cursor:pointer;font-weight:600;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:hover:not(:disabled){border-color:var(--cyan)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.go{background:var(--ph);border-color:var(--ph);color:var(--panel);padding:0 20px;min-width:100px}
+.compose .btn.go{--ph:var(--cyan)}
+.btn[aria-pressed="true"]{border-color:var(--ph);color:var(--ph);background:color-mix(in srgb,var(--ph) 14%,transparent)}
+.scrub{flex:1;min-width:60px;-webkit-appearance:none;appearance:none;height:8px;border-radius:99px;background:linear-gradient(90deg,var(--ph) var(--pct,0%),var(--border) var(--pct,0%));cursor:pointer}
+.scrub::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--panel);border:3px solid var(--ph)}
+.scrub::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--ph)}
+.count{font-family:var(--mono);font-size:13px;color:var(--muted);min-width:56px;text-align:right}
+.speed{border:1px solid var(--border);background:var(--panel-2);border-radius:10px;height:42px;padding:0 8px;font-size:13px}
+
+@media (max-width:880px){
+  .main{flex-direction:column;align-items:stretch}
+  .col{display:contents}
+  .code-card{order:1}.explain{order:2}.viz-card{order:3}.state{order:4}.stack-card{order:5}
+  .scan{grid-template-columns:1fr}
+  .speed,.vlabel{display:none}
+  .ex-title{font-size:19px}
+}
+@media (max-width:480px){
+  .btn.go{min-width:0;padding:0 14px}
+  .count{display:none}
+  .wrap{padding:16px 12px}
+  .bit{width:48px;height:48px;flex-basis:48px}
+}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">trace.run<span class="cursor" aria-hidden="true"></span></div>
+    <div class="lib">
+      <label for="libSel" class="sr">Open a problem</label>
+      <select id="libSel" class="select"></select>
+      <button id="delBtn" class="ghost" type="button" hidden>Remove</button>
+    </div>
+    <button id="newBtn" class="btn-new" type="button">Trace your own code</button>
+  </header>
+
+  <section class="card compose" id="compose" hidden>
+    <h2>Trace your own code <span class="aside">Python, JavaScript, Java, C++ and more, up to 150 lines</span></h2>
+    <label for="codeIn" class="sr">Code</label>
+    <textarea id="codeIn" spellcheck="false" placeholder="Paste a function or a full solution here"></textarea>
+    <div class="row">
+      <label for="exIn" class="sr">Example input</label>
+      <input id="exIn" spellcheck="false" placeholder="Example input (optional), e.g. nums = [2, 7, 11, 15], target = 9">
+      <button id="traceBtn" class="btn go" type="button">Trace it</button>
+      <button id="stopBtn" class="btn" type="button" hidden>Stop</button>
+      <button id="closeBtn" class="btn" type="button">Close</button>
+    </div>
+    <p class="status" id="status" role="status"></p>
+  </section>
+
+  <div class="titlebar">
+    <div class="problem"><span id="probTitle"></span><small id="probSub"></small></div>
+    <div class="loader" id="loader">
+      <label for="argIn">Input</label>
+      <input id="argIn" spellcheck="false" autocomplete="off">
+      <button id="loadBtn" type="button">Run</button>
+    </div>
+  </div>
+  <p class="err" id="err" role="status"></p>
+
+  <section class="card scan" aria-label="Detected patterns">
+    <h2>Patterns detected</h2>
+    <div class="tags" id="tags"></div>
+    <p class="why" id="why"></p>
+  </section>
+
+  <main class="main">
+    <div class="col left" id="colLeft">
+      <section class="card code-card">
+        <h2>Code <span class="file" id="fileName">python</span></h2>
+        <div class="code" id="code"></div>
+      </section>
+      <section class="card state" id="stateCard">
+        <h2>Variables</h2>
+        <div id="vars"></div>
+      </section>
+      <section class="card stack-card" id="stackCard">
+        <h2>Call stack <span class="aside" id="depth"></span></h2>
+        <div class="frames" id="frames"></div>
+      </section>
+    </div>
+    <div class="col right" id="colRight">
+      <section class="card explain">
+        <div class="ex-top"><span class="phase" id="phase"></span><span class="stepno" id="stepno"></span></div>
+        <div class="narr">
+          <svg class="bit" id="bit" viewBox="0 0 64 64" aria-hidden="true">
+            <line class="ant" x1="32" y1="5" x2="32" y2="13"/>
+            <circle class="tip" cx="32" cy="5" r="4"/>
+            <rect class="head" x="8" y="13" width="48" height="39" rx="14"/>
+            <rect class="screen" x="14" y="19" width="36" height="25" rx="8"/>
+            <circle class="eye" cx="25" cy="29" r="3.3"/>
+            <circle class="eye" cx="39" cy="29" r="3.3"/>
+            <rect class="mouth" x="27" y="36" width="10" height="3" rx="1.5"/>
+            <rect class="base" x="20" y="55" width="24" height="5" rx="2.5"/>
+          </svg>
+          <div class="bubble"><span class="who">Bit says</span><span id="bubble"></span></div>
+        </div>
+        <h3 class="ex-title" id="exTitle"></h3>
+        <p class="ex-desc" id="exDesc" aria-live="polite"></p>
+        <div class="cond" id="cond" hidden></div>
+        <p class="role" id="role"></p>
+      </section>
+      <section class="card viz-card" id="vizCard">
+        <h2><span id="vizTitle"></span> <span class="aside" id="vizAside"></span></h2>
+        <div class="tree-wrap" id="viz"></div>
+        <div class="legend" id="legend"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<nav class="dock" aria-label="Step controls">
+  <div class="dock-in">
+    <button class="btn" id="resetBtn" type="button" title="Restart" aria-label="Restart">⟲</button>
+    <button class="btn" id="prevBtn" type="button" aria-label="Previous step">◀</button>
+    <button class="btn" id="playBtn" type="button" aria-label="Play">▶︎</button>
+    <button class="btn go" id="nextBtn" type="button">Next</button>
+    <input class="scrub" id="scrub" type="range" min="0" value="0" aria-label="Jump to step">
+    <span class="count" id="count"></span>
+    <button class="btn" id="voiceBtn" type="button" aria-pressed="false" title="Have Bit read each step aloud">🔈<span class="vlabel">Voice</span></button>
+    <select class="speed" id="speed" aria-label="Playback speed">
+      <option value="1300">Slow</option>
+      <option value="750" selected>Normal</option>
+      <option value="300">Fast</option>
+    </select>
+  </div>
+</nav>
+
+<script>
+/* ================= shared helpers ================= */
+const clone = x => JSON.parse(JSON.stringify(x));
+const fmt = a => '[' + a.join(', ') + ']';
+const PALETTE = ['--mint','--violet','--amber','--pink','--cyan','--coral'];
+const plural = (k, w) => `${k} ${w}${k === 1 ? '' : 's'}`;
+
+function lineFinder(code){
+  const lines = code.split('\n');
+  const L = (needle, nth = 1) => {
+    if (needle.startsWith('=')) return L.exact(needle.slice(1));
+    let k = 0;
+    for (let i = 0; i < lines.length; i++) if (lines[i].includes(needle) && ++k === nth) return i + 1;
+    throw new Error('No line: ' + needle);
+  };
+  L.exact = t => { const i = lines.findIndex(l => l.trim() === t); if (i < 0) throw new Error('No line: ' + t); return i + 1; };
+  return L;
+}
+function recorder(stateFn){
+  const steps = [];
+  const rec = (line, phase, title, desc, narration = '', cond = '') =>
+    steps.push({line, phase, title, desc, narration, cond, ...clone(stateFn())});
+  rec.steps = steps;
+  return rec;
+}
+function makeTree(){
+  const nodes = [];
+  const add = (parent, label, edge = '', cap = '') => {
+    const id = nodes.length;
+    nodes.push({id, parent, label: String(label), edge, cap, kids: []});
+    if (parent != null) nodes[parent].kids.push(id);
+    return id;
+  };
+  return {nodes, add};
+}
+const mkNotes = (L, list) => Object.fromEntries(list.map(([needle, text, nth]) => [L(needle, nth || 1), text]));
+const mkTags = (L, list) => list.map(([name, c, needles, why]) => ({name, c, why,
+  lines: needles.map(x => Array.isArray(x) ? L(x[0], x[1]) : L(x))}));
+
+/* ================= 78. Subsets ================= */
+const CODE_78 = `class Solution:
+    def subsets(self, nums: List[int]) -> List[List[int]]:
+        res = []
+        subset = []
+
+        def dfs(i):
+            if i >= len(nums):
+                res.append(subset.copy())
+                return
+            subset.append(nums[i])
+            dfs(i + 1)
+            subset.pop()
+            dfs(i + 1)
+
+        dfs(0)
+        return res`;
+
+function build78({nums}){
+  const code = CODE_78, L = lineFinder(code), n = nums.length, total = 2 ** n;
+  const T = makeTree();
+  (function pre(parent, edge, i, sub){
+    const id = T.add(parent, i < n ? nums[i] : '✓', edge, i < n ? '' : (sub.length ? sub.join(n >= 4 ? '' : ',') : '[ ]'));
+    if (i < n){ pre(id, '+' + nums[i], i + 1, [...sub, nums[i]]); pre(id, 'skip', i + 1, sub); }
+  })(null, '', 0, []);
+  const res = [], subset = [], frames = [], fin = {};
+  const S = recorder(() => {
+    const top = frames[frames.length - 1];
+    const vars = {nums};
+    if (top) vars.i = top.i;
+    vars.subset = subset; vars.res = res;
+    return {vars, pointers: top && top.i < n ? {nums: {i: top.i}} : {},
+      stack: ['subsets(nums)', ...frames.map(f => `dfs(i=${f.i})`)], viz: {stack: frames.map(f => f.id), fin, ret: {}}};
+  });
+  S(L('res = []'),'Setup','Make an empty res','`res = []`. Every finished subset will land here.','Hi, I’m Bit! First, an empty treasure chest called res. Every subset we find goes in here.');
+  S(L('subset = []'),'Setup','Make an empty path','`subset = []`. This is the path we build as we walk the tree.','And this empty bag is subset. I’ll fill it and empty it as we explore.');
+  S(L('=dfs(0)'),'Start','Start at the root',`Call \`dfs(0)\`: begin by deciding what to do with nums[0] = ${nums[0]}.`,`Here we go! Starting at the top of the tree with the number ${nums[0]}.`);
+  function dfs(i, id){
+    frames.push({i, id});
+    S(L('def dfs'),'Enter',`Enter dfs(${i})`, i < n
+      ? `A new frame goes on the call stack. Now deciding about nums[${i}] = ${nums[i]}. Path so far: \`${fmt(subset)}\`.`
+      : `A new frame goes on the call stack with i = ${i}, one past the last index. Path so far: \`${fmt(subset)}\`.`,
+      i < n ? `New call, dfs of ${i}! Time to decide about ${nums[i]}.` : `New call, dfs of ${i}. Hmm, no numbers left to look at!`);
+    const base = i >= n;
+    S(L('if i >= len'),'Check','Is this a leaf?', base ? 'Yes. Every number already has a take/skip decision, so this path is a complete subset.' : `No. nums[${i}] still needs a decision, so keep going.`,
+      base ? 'Out of numbers? Yes! That means my bag is a finished subset.' : `Out of numbers? Nope, ${nums[i]} still needs deciding.`,
+      `${i} >= ${n}  →  ${base ? 'True' : 'False'}`);
+    if (base){
+      res.push([...subset]); fin[id] = 'leaf';
+      S(L('res.append'),'Collect',`Save ${fmt(subset)}`,`Leaf reached. A copy of \`${fmt(subset)}\` goes into res. That’s subset ${res.length} of ${total}.`,`Treasure! I save a copy of ${fmt(subset)}. That’s ${res.length} of ${total}!`);
+      S(L('=return'),'Return','Back up one level',`This branch is finished. dfs(${i}) leaves the stack and control returns to dfs(${i - 1}).`,`This branch is done. Climbing back up to dfs of ${i - 1}.`);
+      frames.pop(); return;
+    }
+    const [take, skip] = T.nodes[id].kids;
+    subset.push(nums[i]);
+    S(L('subset.append'),'Choose',`Take ${nums[i]}`,`Add nums[${i}] = ${nums[i]} to the path. subset is now \`${fmt(subset)}\`.`,`I’ll take the ${nums[i]}! My bag now holds ${fmt(subset)}.`);
+    S(L('dfs(i + 1)', 1),'Explore',`Go deeper with ${nums[i]}`,`Call \`dfs(${i + 1})\` to decide the next number while ${nums[i]} is in the path. This is the left branch.`,`Down the left branch we go, keeping the ${nums[i]}.`);
+    dfs(i + 1, take);
+    subset.pop();
+    S(L('subset.pop'),'Backtrack',`Undo ${nums[i]}`,`Back in dfs(${i}). Pop ${nums[i]} off the path so it returns to \`${fmt(subset)}\`, exactly how it was before we took it.`,`Rewind! I put the ${nums[i]} back. My bag is ${fmt(subset)} again.`);
+    S(L('dfs(i + 1)', 2),'Explore',`Go deeper without ${nums[i]}`,`Call \`dfs(${i + 1})\` again, this time with ${nums[i]} left out. This is the right branch.`,`Now the right branch, where we skip the ${nums[i]}.`);
+    dfs(i + 1, skip);
+    fin[id] = 'done';
+    S(L('dfs(i + 1)', 2),'Return',`dfs(${i}) is finished`,`Both branches below this node are explored. dfs(${i}) leaves the stack${i > 0 ? ` and control returns to dfs(${i - 1})` : ''}.`,`Both ways checked for ${nums[i]}. Heading back up!`);
+    frames.pop();
+  }
+  dfs(0, 0);
+  S(L('return res'),'Done','All subsets found',`Every branch has been explored. Return all ${res.length} subsets in res.`,`Mission complete! We found all ${res.length} subsets. High five!`);
+  return {code, steps: S.steps, complexity:'O(n·2ⁿ) time, O(n) stack',
+    subtitle:'Return every possible subset of nums. The classic take-or-skip backtracking tree.',
+    varNotes:{subset:'the current path'}, goal:{var:'res', total, label:'collected'},
+    lineNotes: mkNotes(L, [
+      ['res = []','Creates the list that will collect every finished subset.'],
+      ['subset = []','The path being built. One shared list that grows and shrinks as the search moves.'],
+      ['def dfs','The recursive helper. `i` is the index of the number being decided right now.'],
+      ['if i >= len','Base case: once `i` runs past the end, every number has a take/skip decision.'],
+      ['res.append','Saves a snapshot of the path. `.copy()` matters because `subset` keeps changing afterwards.'],
+      ['=return','Ends this branch and hands control back to the caller.'],
+      ['subset.append','Choose: put `nums[i]` into the path.'],
+      ['dfs(i + 1)','Explore the “take” branch with `nums[i]` included.',1],
+      ['subset.pop','Un-choose: remove `nums[i]` so the path is exactly as it was before. This is the backtrack.'],
+      ['dfs(i + 1)','Explore the “skip” branch with `nums[i]` left out. Also where the call finishes.',2],
+      ['=dfs(0)','Starts the search at index 0, the root of the decision tree.'],
+      ['return res','Every branch is finished, so all subsets are in `res`.']]),
+    tags: mkTags(L, [
+      ['Backtracking','--coral',['subset.append',['dfs(i + 1)',1],'subset.pop'],'choose (append), explore (dfs), un-choose (pop). The pop restores the path so the next branch starts clean.'],
+      ['DFS','--cyan',[['dfs(i + 1)',1],['dfs(i + 1)',2],'=dfs(0)'],'each call goes all the way down one branch before trying the other, so the tree is explored depth first.'],
+      ['Recursion','--violet',['def dfs','if i >= len','=return'],'dfs calls itself with `i + 1`, and the base case `i >= len(nums)` stops it.'],
+      ['Take / skip','--mint',['subset.append',['dfs(i + 1)',1],['dfs(i + 1)',2]],'every number gets two branches, include it or leave it out. n numbers give 2ⁿ leaves.'],
+      ['Power set','--pink',['res.append'],'each leaf saves one subset. All the leaves together are every possible subset.']]),
+    visual:{type:'rtree', title:'Decision tree', aside:'left = take, right = skip', nodes:T.nodes,
+      levels: Array.from({length: n + 1}, (_, d) => d < n ? `i=${d}` : 'leaf'),
+      legend:[['on the call stack','--cyan'],['explored','--dim'],['subset saved','--pink']]}};
+}
+
+/* ================= 90. Subsets II ================= */
+const CODE_90 = `class Solution:
+    def subsetsWithDup(self, nums: List[int]) -> List[List[int]]:
+        res = []
+        nums.sort()
+
+        def backtrack(i, subset):
+            if i == len(nums):
+                res.append(subset[::])
+                return
+
+            subset.append(nums[i])
+            backtrack(i + 1, subset)
+            subset.pop()
+
+            while i + 1 < len(nums) and nums[i] == nums[i + 1]:
+                i += 1
+            backtrack(i + 1, subset)
+
+        backtrack(0, [])
+        return res`;
+
+function build90({nums: input}){
+  const code = CODE_90, L = lineFinder(code);
+  const nums = [...input].sort((a, b) => a - b), n = nums.length;
+  const T = makeTree();
+  (function pre(parent, edge, i, sub){
+    const id = T.add(parent, i < n ? nums[i] : '✓', edge, i < n ? '' : (sub.length ? sub.join(',') : '[ ]'));
+    if (i < n){
+      pre(id, '+' + nums[i], i + 1, [...sub, nums[i]]);
+      let j = i; while (j + 1 < n && nums[j] === nums[j + 1]) j++;
+      pre(id, j > i ? `skip ${nums[i]}s` : 'skip', j + 1, sub);
+    }
+  })(null, '', 0, []);
+  const total = T.nodes.filter(x => !x.kids.length).length;
+  let numsVar = [...input];
+  const res = [], subset = [], frames = [], fin = {};
+  const S = recorder(() => {
+    const top = frames[frames.length - 1];
+    const vars = {nums: numsVar};
+    if (top) vars.i = top.i;
+    vars.subset = subset; vars.res = res;
+    return {vars, pointers: top && top.i < n ? {nums: {i: top.i}} : {},
+      stack: ['subsetsWithDup(nums)', ...frames.map(f => `backtrack(i=${f.i0})`)], viz: {stack: frames.map(f => f.id), fin, ret: {}}};
+  });
+  S(L('res = []'),'Setup','Make an empty res','`res = []` will collect every unique subset.','Hi, I’m Bit! Empty treasure chest first. Only unique subsets allowed in here.');
+  numsVar = nums;
+  S(L('nums.sort()'),'Setup','Sort nums',`nums becomes \`${fmt(nums)}\`. Sorting puts equal numbers side by side, which is what makes skipping duplicates possible.`,'Line them up! Sorting puts twins next to each other so I can spot them.');
+  S(L('backtrack(0, [])'),'Start','Start at the root','Call `backtrack(0, [])` with an empty subset.',`Off we go, starting with ${nums[0]}!`);
+  function bt(i, id){
+    const f = {i, i0: i, id}; frames.push(f);
+    S(L('def backtrack'),'Enter',`Enter backtrack(${i})`, i < n
+      ? `New frame. Deciding about nums[${i}] = ${nums[i]}. subset is \`${fmt(subset)}\`.`
+      : `New frame with i = ${i}, past the last index. subset is \`${fmt(subset)}\`.`,
+      i < n ? `New call! What do we do with this ${nums[i]}?` : 'New call, and no numbers left!');
+    const base = i === n;
+    S(L('if i == len(nums)'),'Check','Is this a leaf?', base ? 'Yes. Every number has been decided, so subset is complete.' : `No. nums[${i}] = ${nums[i]} still needs a decision.`,
+      base ? 'Leaf! My bag is a finished subset.' : 'Not a leaf yet, keep deciding.', `${i} == ${n}  →  ${base ? 'True' : 'False'}`);
+    if (base){
+      res.push([...subset]); fin[id] = 'leaf';
+      S(L('res.append'),'Collect',`Save ${fmt(subset)}`,`A copy of \`${fmt(subset)}\` goes into res (\`subset[::]\` makes the copy). That’s ${res.length} of ${total}.`,`Treasure! ${fmt(subset)} goes in the chest. ${res.length} of ${total}!`);
+      S(L('=return'),'Return','Back up one level','This branch is done, so return to the caller.','Climbing back up!');
+      frames.pop(); return;
+    }
+    const [take, skip] = T.nodes[id].kids;
+    subset.push(nums[i]);
+    S(L('subset.append'),'Choose',`Take ${nums[i]}`,`Add ${nums[i]} to subset, which is now \`${fmt(subset)}\`.`,`I’ll take the ${nums[i]}! Bag: ${fmt(subset)}.`);
+    S(L('backtrack(i + 1, subset)', 1),'Explore',`Go deeper with ${nums[i]}`,`Call \`backtrack(${i + 1})\` for every subset that includes this ${nums[i]}.`,`Down the left branch, keeping the ${nums[i]}.`);
+    bt(i + 1, take);
+    subset.pop();
+    S(L('subset.pop'),'Backtrack',`Undo ${nums[i]}`,`Back in backtrack(${f.i0}). Remove ${nums[i]}, so subset is \`${fmt(subset)}\` again.`,`Rewind! The ${nums[i]} goes back. Bag: ${fmt(subset)}.`);
+    for (;;){
+      const inRange = f.i + 1 < n, more = inRange && nums[f.i] === nums[f.i + 1];
+      S(L('while i + 1'),'Check', more ? `Duplicate ${nums[f.i]} ahead` : 'No duplicate ahead',
+        more ? `nums[${f.i + 1}] is also ${nums[f.i]}. Starting the skip branch there would rebuild subsets we already have, so move past it.`
+             : inRange ? `nums[${f.i + 1}] = ${nums[f.i + 1]} is different, so the skip branch can start there.` : 'There is nothing after this index, so stop looking.',
+        more ? `Another ${nums[f.i]}! Starting from it would make copycat subsets. Skip it.` : 'No twins ahead. Good to go.',
+        inRange ? `${nums[f.i]} == ${nums[f.i + 1]}  →  ${more ? 'True' : 'False'}` : `${f.i + 1} < ${n}  →  False`);
+      if (!more) break;
+      f.i++;
+      S(L('i += 1'),'Update','Skip the duplicate',`i moves to ${f.i}, past the repeated ${nums[f.i]}.`,`Hop over the extra ${nums[f.i]}.`);
+    }
+    const v = nums[f.i0], many = f.i > f.i0;
+    S(L('backtrack(i + 1, subset)', 2),'Explore',`Go deeper without ${v}`, many ? `Call \`backtrack(${f.i + 1})\`: subsets with no ${v} at all.` : `Call \`backtrack(${f.i + 1})\`: subsets without this ${v}.`, `Now the right branch, with no ${v}${many ? 's' : ''}.`);
+    bt(f.i + 1, skip);
+    fin[id] = 'done';
+    S(L('backtrack(i + 1, subset)', 2),'Return',`backtrack(${f.i0}) is finished`,'Both branches are explored, so this frame returns.','All done here, heading back up!');
+    frames.pop();
+  }
+  bt(0, 0);
+  S(L('return res'),'Done','All unique subsets found',`Return all ${res.length} subsets. No duplicates made it in.`,`Mission complete! ${res.length} unique subsets, zero copycats.`);
+  const BT1 = ['backtrack(i + 1, subset)', 1], BT2 = ['backtrack(i + 1, subset)', 2];
+  return {code, steps: S.steps, complexity:'O(n·2ⁿ) time, O(n) stack',
+    subtitle:'Like Subsets, but nums can contain duplicates and the answer must not.',
+    varNotes:{subset:'the current path'}, goal:{var:'res', total, label:'collected'},
+    lineNotes: mkNotes(L, [
+      ['res = []','Collects every unique subset.'],
+      ['nums.sort()','Puts equal numbers next to each other so duplicates can be skipped.'],
+      ['def backtrack','`i` is the index being decided; `subset` is the current path.'],
+      ['if i == len(nums)','Base case: every number has been decided.'],
+      ['res.append','Saves a copy of the path. `subset[::]` is a full slice, which copies the list.'],
+      ['=return','Ends this branch.'],
+      ['subset.append','Choose: include `nums[i]`.'],
+      ['backtrack(i + 1, subset)','Explore every subset that includes `nums[i]`.',1],
+      ['subset.pop','Un-choose: undo the append.'],
+      ['while i + 1','Look ahead for copies of `nums[i]`.'],
+      ['i += 1','Step past a copy, so the skip branch skips every copy.'],
+      ['backtrack(i + 1, subset)','Explore subsets with no copy of this value at all. Also where the call finishes.',2],
+      ['backtrack(0, [])','Starts the search with an empty path.'],
+      ['return res','All unique subsets are in `res`.']]),
+    tags: mkTags(L, [
+      ['Backtracking','--coral',['subset.append',BT1,'subset.pop'],'choose (append), explore, un-choose (pop).'],
+      ['Skip duplicates','--amber',['while i + 1','i += 1'],'after sorting, equal values sit together. The skip branch jumps past every copy so the same subset is never built twice.'],
+      ['Sorting','--violet',['nums.sort()'],'sorting first is what makes duplicates adjacent and easy to skip.'],
+      ['DFS','--cyan',[BT1,BT2,'backtrack(0, [])'],'each call explores one branch fully before the other.'],
+      ['Power set','--pink',['res.append'],'each leaf saves one distinct subset.']]),
+    visual:{type:'rtree', title:'Decision tree', aside:'left = take, right = skip', nodes:T.nodes,
+      legend:[['on the call stack','--cyan'],['explored','--dim'],['subset saved','--pink']]}};
+}
+
+/* ================= 46. Permutations ================= */
+const CODE_46 = `class Solution:
+    def permute(self, nums: List[int]) -> List[List[int]]:
+        res = []
+        perm = []
+        used = [False] * len(nums)
+
+        def backtrack():
+            if len(perm) == len(nums):
+                res.append(perm.copy())
+                return
+            for j in range(len(nums)):
+                if used[j]:
+                    continue
+                used[j] = True
+                perm.append(nums[j])
+                backtrack()
+                perm.pop()
+                used[j] = False
+
+        backtrack()
+        return res`;
+
+function build46({nums}){
+  const code = CODE_46, L = lineFinder(code), n = nums.length;
+  const T = makeTree();
+  (function pre(parent, label, edge, perm, used){
+    const id = T.add(parent, label, edge, perm.length === n ? perm.join(',') : '');
+    if (perm.length < n) nums.forEach((v, j) => { if (!used[j]){ const u = [...used]; u[j] = true; pre(id, v, '+' + v, [...perm, v], u); } });
+  })(null, '∅', '', [], nums.map(() => false));
+  let total = 1; for (let k = 2; k <= n; k++) total *= k;
+  const res = [], perm = [], used = nums.map(() => false), frames = [], fin = {};
+  let setup = 0;
+  const S = recorder(() => {
+    const top = frames[frames.length - 1];
+    const vars = {nums};
+    if (top && top.j != null) vars.j = top.j;
+    if (setup >= 1) vars.res = res;
+    if (setup >= 2) vars.perm = perm;
+    if (setup >= 3) vars.used = used;
+    return {vars, pointers: top && top.j != null ? {nums: {j: top.j}, used: {j: top.j}} : {},
+      stack: ['permute(nums)', ...frames.map(f => `backtrack() perm=${fmt(f.entry)}`)], viz: {stack: frames.map(f => f.id), fin, ret: {}}};
+  });
+  setup = 1; S(L('res = []'),'Setup','Make an empty res','`res` will collect every ordering.','Hi, I’m Bit! Let’s line up these numbers every possible way.');
+  setup = 2; S(L('perm = []'),'Setup','Make an empty ordering','`perm` is the ordering we’re building, one spot at a time.','This empty line is perm. We fill it spot by spot.');
+  setup = 3; S(L('used = [False]'),'Setup','Nothing used yet',`\`used\` has one flag per number, all False.`,'And these flags remember who’s already in line.');
+  S(L('backtrack()', 3),'Start','Start filling spot 1','Call `backtrack()` with an empty perm.','Here we go!');
+  function bt(id){
+    const f = {id, j: null, entry: [...perm]}; frames.push(f);
+    S(L('def backtrack'),'Enter','Enter backtrack()',`New frame. perm is \`${fmt(perm)}\`, so we’re filling spot ${perm.length + 1} of ${n}.`, perm.length < n ? `New call! Who goes in spot ${perm.length + 1}?` : 'New call. Every spot is filled!');
+    const base = perm.length === n;
+    S(L('if len(perm)'),'Check','Is perm full?', base ? 'Yes, every spot is filled. This is a complete ordering.' : `No, ${plural(n - perm.length, 'spot')} left.`, base ? 'Full line! That’s a complete ordering.' : 'Not full yet.', `${perm.length} == ${n}  →  ${base ? 'True' : 'False'}`);
+    if (base){
+      res.push([...perm]); fin[id] = 'leaf';
+      S(L('res.append'),'Collect',`Save ${fmt(perm)}`,`A copy of \`${fmt(perm)}\` goes into res. That’s ${res.length} of ${total}.`,`Saved ${fmt(perm)}! ${res.length} of ${total}.`);
+      S(L('=return'),'Return','Back up one level','This ordering is done, so return.','Back up we go!');
+      frames.pop(); return;
+    }
+    let kid = 0;
+    for (let j = 0; j < n; j++){
+      f.j = j;
+      if (used[j]){
+        S(L('continue'),'Check',`Skip ${nums[j]}`,`j = ${j}: ${nums[j]} is already in perm, so \`continue\` to the next j.`,`${nums[j]} is already in line. Next!`,`used[${j}]  →  True`);
+        continue;
+      }
+      S(L('if used[j]'),'Check',`Try ${nums[j]}`,`j = ${j}: ${nums[j]} isn’t in perm yet, so it can take spot ${perm.length + 1}.`,`Is ${nums[j]} free? Yes!`,`used[${j}]  →  False`);
+      used[j] = true;
+      S(L('used[j] = True'),'Update',`Mark ${nums[j]} as used`,`\`used[${j}] = True\` so deeper calls won’t pick ${nums[j]} again.`,`Stamping ${nums[j]} as taken.`);
+      perm.push(nums[j]);
+      S(L('perm.append'),'Choose',`Place ${nums[j]}`,`perm is now \`${fmt(perm)}\`.`,`${nums[j]} joins the line. Now it’s ${fmt(perm)}.`);
+      S(L('backtrack()', 2),'Explore','Fill the next spot', perm.length < n ? `Call \`backtrack()\` to fill spot ${perm.length + 1}.` : 'Call `backtrack()`. Every spot is filled now, so it will save this ordering.','Diving down to the next spot!');
+      bt(T.nodes[id].kids[kid++]);
+      perm.pop();
+      S(L('perm.pop()'),'Backtrack',`Remove ${nums[j]}`,`Back in this call. Take ${nums[j]} off the end, so perm is \`${fmt(perm)}\` again.`,`Rewind! ${nums[j]} steps out of line.`);
+      used[j] = false;
+      S(L('used[j] = False'),'Update',`Free ${nums[j]}`,`\`used[${j}] = False\`, so ${nums[j]} can be placed again in other orderings.`,`${nums[j]} is free again.`);
+    }
+    f.j = null; fin[id] = 'done';
+    S(L('for j in range'),'Return','Loop finished',`Every j has been tried for spot ${perm.length + 1}, so this call returns.`,'Tried everyone for this spot. Back up!');
+    frames.pop();
+  }
+  bt(0);
+  S(L('return res'),'Done','All orderings found',`Return all ${res.length} permutations.`,`Mission complete! ${res.length} different line-ups.`);
+  return {code, steps: S.steps, complexity:'O(n·n!) time, O(n) stack',
+    subtitle:'Return every ordering of distinct numbers. Each level of the tree fills one spot.',
+    varNotes:{perm:'the ordering so far', used:'already placed?'}, goal:{var:'res', total, label:'collected'},
+    lineNotes: mkNotes(L, [
+      ['res = []','Collects every finished ordering.'],
+      ['perm = []','The ordering being built, one spot at a time.'],
+      ['used = [False]','Remembers which numbers are already in `perm`.'],
+      ['def backtrack','Fills the next open spot in `perm`.'],
+      ['if len(perm)','Base case: every spot is filled.'],
+      ['res.append','Saves a copy, because `perm` keeps changing.'],
+      ['=return','Ends this branch.'],
+      ['for j in range','Try every number for the current spot. Also where the call finishes.'],
+      ['if used[j]','Skip numbers that are already placed.'],
+      ['continue','Jump to the next `j`.'],
+      ['used[j] = True','Mark `nums[j]` as placed.'],
+      ['perm.append','Choose: put `nums[j]` in the next spot.'],
+      ['backtrack()','Fill the remaining spots.',2],
+      ['perm.pop()','Un-choose: free the spot.'],
+      ['used[j] = False','Unmark `nums[j]` so later orderings can use it.'],
+      ['backtrack()','Start with an empty ordering.',3],
+      ['return res','Every ordering is in `res`.']]),
+    tags: mkTags(L, [
+      ['Backtracking','--coral',['perm.append',['backtrack()',2],'perm.pop()'],'place a number, recurse, then remove it so the spot can hold the next candidate.'],
+      ['Visited array','--amber',['used = [False]','if used[j]','used[j] = True','used[j] = False'],'the `used` list stops a number from appearing twice in one ordering.'],
+      ['DFS','--cyan',[['backtrack()',2],['backtrack()',3]],'each ordering is completed before the next one is started.'],
+      ['Permutation tree','--violet',['for j in range','res.append'],'the first spot has n choices, the next n − 1, and so on, so there are n! leaves.']]),
+    visual:{type:'rtree', title:'Choice tree', aside:'each level fills one spot', nodes:T.nodes,
+      levels: Array.from({length: n + 1}, (_, d) => d === 0 ? 'start' : `spot ${d}`),
+      legend:[['on the call stack','--cyan'],['explored','--dim'],['ordering saved','--pink']]}};
+}
+
+/* ================= 1239. Max length concatenated ================= */
+const CODE_1239 = `class Solution:
+    def maxLength(self, arr: List[str]) -> int:
+        chars = set()
+
+        def backtrack(i):
+            if i == len(arr):
+                return len(chars)
+            best = 0
+            s = arr[i]
+            if len(set(s)) == len(s) and not chars & set(s):
+                chars.update(s)
+                best = backtrack(i + 1)
+                chars.difference_update(s)
+            return max(best, backtrack(i + 1))
+
+        return backtrack(0)`;
+
+function build1239({arr}){
+  const code = CODE_1239, L = lineFinder(code), n = arr.length;
+  const short = s => s.length <= 3 ? s : s.slice(0, 2) + '…';
+  const fits = (s, set) => new Set(s).size === s.length && ![...s].some(c => set.has(c));
+  const T = makeTree();
+  (function pre(parent, edge, i, chars, taken){
+    if (i === n){ T.add(parent, '✓', edge, taken.join('') || '""'); return; }
+    const s = arr[i];
+    const id = T.add(parent, short(s), edge, '');
+    if (fits(s, chars)) pre(id, '+' + s, i + 1, new Set([...chars, ...s]), [...taken, s]);
+    else T.add(id, '✕', '+' + s, '');
+    pre(id, 'skip', i + 1, chars, taken);
+  })(null, '', 0, new Set(), []);
+  const chars = new Set(), frames = [], fin = {}, ret = {};
+  const setStr = () => chars.size ? '{' + [...chars].sort().join(', ') + '}' : 'set()';
+  const S = recorder(() => {
+    const top = frames[frames.length - 1];
+    const vars = {arr};
+    if (top){ vars.i = top.i; if (top.s != null) vars.s = top.s; if (top.best != null) vars.best = top.best; }
+    vars.chars = [...chars].sort();
+    return {vars, pointers: top && top.i < n ? {arr: {i: top.i}} : {},
+      stack: ['maxLength(arr)', ...frames.map(f => `backtrack(i=${f.i})`)], viz: {stack: frames.map(f => f.id), fin, ret}};
+  });
+  S(L('chars = set()'),'Setup','Start with no letters','`chars` holds the letters of every string we’ve taken so far.','Hi, I’m Bit! My letter bag starts empty. No letter may ever appear twice!');
+  S(L('return backtrack(0)'),'Start','Start at the first string',`Call \`backtrack(0)\` to decide about "${arr[0]}".`,`Let’s start with "${arr[0]}".`);
+  function bt(i, id){
+    const f = {i, id, s: null, best: null}; frames.push(f);
+    S(L('def backtrack'),'Enter',`Enter backtrack(${i})`, i < n ? `New frame. Deciding whether to take arr[${i}] = "${arr[i]}". chars is \`${setStr()}\`.` : `New frame with i = ${i}: every string has been decided.`, i < n ? `New call! Take "${arr[i]}" or skip it?` : 'New call, and no strings left!');
+    const base = i === n;
+    S(L('if i == len(arr)'),'Check','Is this a leaf?', base ? 'Yes. Every string has been taken or skipped.' : `No. "${arr[i]}" still needs a decision.`, base ? 'All strings decided!' : 'Still deciding.', `${i} == ${n}  →  ${base ? 'True' : 'False'}`);
+    if (base){
+      const len = chars.size; ret[id] = len; fin[id] = 'leaf';
+      S(L('return len(chars)'),'Collect',`Return ${len}`, len ? `The letters taken, \`${setStr()}\`, are all unique, so this combination has length ${len}.` : 'Nothing was taken on this path, so its length is 0.', `End of the line! This combo scores ${len}.`);
+      frames.pop(); return len;
+    }
+    const [take, skip] = T.nodes[id].kids;
+    f.best = 0;
+    S(L('best = 0'),'Setup','best starts at 0','`best` will hold the longest result from taking arr[i]. It stays 0 if we can’t take it.','Starting score: zero.');
+    const s = arr[i]; f.s = s;
+    S(L('s = arr[i]'),'Update',`Look at "${s}"`,`s = "${s}".`,`Next up: "${s}".`);
+    const selfDup = new Set(s).size !== s.length, clash = [...new Set(s)].filter(c => chars.has(c)), ok = !selfDup && !clash.length;
+    if (!ok) fin[take] = 'pruned';
+    S(L('if len(set(s))'),'Check', ok ? `"${s}" fits` : `"${s}" doesn’t fit`,
+      ok ? `"${s}" has no repeated letters and shares none with chars, so we can take it.`
+         : selfDup ? `"${s}" repeats a letter by itself, so it can never be taken. That branch is pruned.` : `"${s}" shares ${clash.map(c => `"${c}"`).join(', ')} with chars. Taking it would repeat letters, so that branch is pruned.`,
+      ok ? `"${s}" fits perfectly. Let’s try taking it!` : `Uh-oh, "${s}" would repeat ${selfDup ? 'a letter' : clash.join(' and ')}. Not allowed!`,
+      ok ? 'no repeats and no overlap  →  True' : selfDup ? `len(set("${s}")) == len("${s}")  →  False` : `chars & set("${s}") = {${clash.join(', ')}}  →  False`);
+    if (ok){
+      [...s].forEach(c => chars.add(c));
+      S(L('chars.update(s)'),'Choose',`Take "${s}"`,`Add its letters. chars is now \`${setStr()}\`.`,`Taking "${s}"! My bag: ${[...chars].sort().join(', ')}.`);
+      S(L('best = backtrack(i + 1)'),'Explore',`Go deeper with "${s}"`,`Call \`backtrack(${i + 1})\` to see how long the string gets with "${s}" included.`,`Down the take branch with "${s}".`);
+      const r = bt(i + 1, take); f.best = r;
+      S(L('best = backtrack(i + 1)'),'Update',`best = ${r}`,`The take branch came back with ${r}, so best = ${r}.`,`The take branch scored ${r}!`);
+      [...s].forEach(c => chars.delete(c));
+      S(L('chars.difference_update(s)'),'Backtrack',`Remove "${s}"`,`Take its letters back out. chars is \`${setStr()}\` again.`,`Rewind! "${s}" leaves the bag.`);
+    }
+    S(L('return max(best'),'Explore',`Go deeper without "${s}"`,`Call \`backtrack(${i + 1})\` for the skip branch.`,`Now the skip branch, without "${s}".`);
+    const r2 = bt(i + 1, skip), m = Math.max(f.best, r2);
+    ret[id] = m; fin[id] = 'done';
+    S(L('return max(best'),'Return',`Return ${m}`,`Take gave ${f.best}, skip gave ${r2}. Return the larger, ${m}.`,`Take scored ${f.best}, skip scored ${r2}. I keep the ${m}!`, `max(${f.best}, ${r2})  →  ${m}`);
+    frames.pop(); return m;
+  }
+  const ans = bt(0, 0);
+  S(L('return backtrack(0)'),'Done',`Answer: ${ans}`,`The longest concatenation with all-unique letters has length ${ans}.`,`Mission complete! The best we can do is ${ans} letters.`);
+  return {code, steps: S.steps, complexity:'O(2ⁿ·m) time, O(n) stack',
+    subtitle:'Pick strings so every letter is unique; return the longest total length.',
+    varNotes:{chars:'letters taken so far'},
+    lineNotes: mkNotes(L, [
+      ['chars = set()','Letters used by the strings currently taken.'],
+      ['def backtrack','Takes or skips `arr[i]` and returns the longest length reachable from here.'],
+      ['if i == len(arr)','Base case: every string decided.'],
+      ['return len(chars)','A finished path scores the number of letters it used.'],
+      ['best = 0','Best length if we take `arr[i]`. Stays 0 if we can’t.'],
+      ['s = arr[i]','The string being decided.'],
+      ['if len(set(s))','Can we take `s`? It needs no repeated letters and no overlap with `chars`.'],
+      ['chars.update(s)','Choose: add the letters of `s`.'],
+      ['best = backtrack(i + 1)','Explore the take branch.'],
+      ['chars.difference_update(s)','Un-choose: remove the letters of `s`.'],
+      ['return max(best','Explore the skip branch, then return the larger answer.'],
+      ['return backtrack(0)','Start with nothing taken.']]),
+    tags: mkTags(L, [
+      ['Backtracking','--coral',['chars.update(s)','best = backtrack(i + 1)','chars.difference_update(s)'],'add letters, recurse, then remove them before trying the skip branch.'],
+      ['Pruning','--amber',['if len(set(s))'],'a string that clashes is never taken, so that whole branch is cut off early.'],
+      ['Hash set','--violet',['chars = set()','if len(set(s))'],'a set makes “is this letter used?” an O(1) check.'],
+      ['Take / skip','--mint',['best = backtrack(i + 1)','return max(best'],'each string is either taken or skipped, and the better result wins.']]),
+    visual:{type:'rtree', title:'Decision tree', aside:'left = take, right = skip, =n is what a call returns', nodes:T.nodes,
+      levels: Array.from({length: n + 1}, (_, d) => d < n ? `i=${d}` : 'leaf'),
+      legend:[['on the call stack','--cyan'],['explored','--dim'],['complete path','--pink'],['pruned','--coral']]}};
+}
+
+/* ================= 200. Number of Islands ================= */
+const CODE_200 = `class Solution:
+    def numIslands(self, grid: List[List[str]]) -> int:
+        ROWS, COLS = len(grid), len(grid[0])
+        islands = 0
+
+        def dfs(r, c):
+            if r < 0 or c < 0 or r >= ROWS or c >= COLS or grid[r][c] != "1":
+                return
+            grid[r][c] = "0"
+            dfs(r + 1, c)
+            dfs(r - 1, c)
+            dfs(r, c + 1)
+            dfs(r, c - 1)
+
+        for r in range(ROWS):
+            for c in range(COLS):
+                if grid[r][c] == "1":
+                    dfs(r, c)
+                    islands += 1
+        return islands`;
+
+function build200({grid}){
+  const code = CODE_200, L = lineFinder(code);
+  const g = clone(grid), R = g.length, C = g[0].length, isl = g.map(r => r.map(() => 0));
+  let islands = 0, scan = null, probe = null;
+  const frames = [];
+  const S = recorder(() => {
+    const top = frames[frames.length - 1];
+    const vars = {ROWS: R, COLS: C, islands};
+    if (top){ vars.r = top.r; vars.c = top.c; } else if (scan){ vars.r = scan[0]; vars.c = scan[1]; }
+    return {vars, pointers: {}, stack: ['numIslands(grid)', ...frames.map(f => `dfs(${f.r}, ${f.c})`)],
+      viz: {cells: g, tint: isl, cur: top ? [top.r, top.c] : null, path: frames.slice(0, -1).map(f => [f.r, f.c]), scan, probe}};
+  });
+  S(L('ROWS, COLS'),'Setup','Measure the grid',`The grid has ${R} rows and ${C} columns.`,`Hi, I’m Bit! Let’s explore this ${R} by ${C} map.`);
+  S(L('islands = 0'),'Setup','No islands yet','`islands` counts separate islands.','Island counter: zero.');
+  const DIRS = [['dfs(r + 1, c)',1,0,'down'],['dfs(r - 1, c)',-1,0,'up'],['dfs(r, c + 1)',0,1,'right'],['dfs(r, c - 1)',0,-1,'left']];
+  function dfs(r, c){
+    frames.push({r, c});
+    const oob = r < 0 || c < 0 || r >= R || c >= C;
+    if (oob || g[r][c] !== '1'){
+      const why = r < 0 ? `r < 0` : c < 0 ? `c < 0` : r >= R ? `r >= ROWS` : c >= C ? `c >= COLS` : `grid[${r}][${c}] != "1"`;
+      probe = [r, c];
+      S(L('if r < 0'),'Check',`dfs(${r}, ${c}): stop`,
+        oob ? `(${r}, ${c}) is outside the grid, so this call returns right away.` : isl[r][c] ? `(${r}, ${c}) was already sunk, so this call returns right away.` : `(${r}, ${c}) is water, so this call returns right away.`,
+        oob ? 'Whoa, that’s off the map! Turning back.' : isl[r][c] ? 'Been here already!' : 'Splash, water! Turning back.', `${why}  →  True`);
+      probe = null; frames.pop(); return;
+    }
+    S(L('if r < 0'),'Check',`dfs(${r}, ${c}): land`,`(${r}, ${c}) is inside the grid and is "1", so keep going.`,`(${r}, ${c}) is solid land!`,'out of bounds or not "1"  →  False');
+    g[r][c] = '0'; isl[r][c] = islands + 1;
+    S(L('grid[r][c] = "0"'),'Update',`Sink (${r}, ${c})`,`Set grid[${r}][${c}] = "0" so this cell is never visited or counted again.`,`Sinking (${r}, ${c}) so we never count it twice.`);
+    for (const [needle, dr, dc, name] of DIRS){
+      S(L(needle),'Explore',`Look ${name}`,`Call \`dfs(${r + dr}, ${c + dc})\`, the cell ${name} of (${r}, ${c}).`,`Peeking ${name}...`);
+      dfs(r + dr, c + dc);
+    }
+    S(L('dfs(r, c - 1)'),'Return',`dfs(${r}, ${c}) is finished`,'All four neighbors are checked, so return to the caller.','All four directions done. Back we go!');
+    frames.pop();
+  }
+  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++){
+    scan = [r, c];
+    const land = g[r][c] === '1';
+    S(L('if grid[r][c] == "1"'),'Loop', land ? `New land at (${r}, ${c})` : `Scan (${r}, ${c})`,
+      land ? `grid[${r}][${c}] is "1" and hasn’t been sunk, so it belongs to a new island.` : isl[r][c] ? `grid[${r}][${c}] is "0" now, because we sank it as part of island ${isl[r][c]}.` : `grid[${r}][${c}] is "0", water.`,
+      land ? 'Land ho! A brand new island!' : isl[r][c] ? 'Already sunk. Moving on.' : 'Just water. Next!', `grid[${r}][${c}] == "1"  →  ${land ? 'True' : 'False'}`);
+    if (land){
+      S(L('=dfs(r, c)'),'Explore',`Sink island ${islands + 1}`,`Call \`dfs(${r}, ${c})\` to visit every land cell connected to this one and sink it.`,'Let’s explore the whole island and sink it as we go!');
+      dfs(r, c);
+      islands++;
+      S(L('islands += 1'),'Collect',`islands = ${islands}`,`That whole island is sunk, so count it. islands = ${islands}.`,`Island number ${islands}, done!`);
+    }
+  }
+  scan = null;
+  S(L('return islands'),'Done',`${plural(islands, 'island')}`,`Every cell has been scanned. Return ${islands}.`,`Mission complete! I counted ${plural(islands, 'island')}.`);
+  return {code, steps: S.steps, complexity:'O(rows·cols) time and space',
+    subtitle:'Count groups of connected "1" cells (up, down, left, right).',
+    lineNotes: mkNotes(L, [
+      ['ROWS, COLS','Grid size, used for bounds checks.'],
+      ['islands = 0','How many islands found so far.'],
+      ['def dfs','Sinks every land cell connected to (r, c).'],
+      ['if r < 0','Stop at the grid’s edge, at water, or at land already sunk.'],
+      ['grid[r][c] = "0"','Sink the cell so it’s never visited or counted again.'],
+      ['dfs(r + 1, c)','Explore the cell below.'],
+      ['dfs(r - 1, c)','Explore the cell above.'],
+      ['dfs(r, c + 1)','Explore the cell to the right.'],
+      ['dfs(r, c - 1)','Explore the cell to the left. Also where the call finishes.'],
+      ['if grid[r][c] == "1"','Unsunk land means we found a new island.'],
+      ['=dfs(r, c)','Sink the whole island.'],
+      ['islands += 1','Count it.'],
+      ['return islands','The number of islands.']]),
+    tags: mkTags(L, [
+      ['DFS','--cyan',['def dfs','dfs(r + 1, c)','dfs(r - 1, c)','dfs(r, c + 1)','dfs(r, c - 1)'],'each call dives into a neighbor before trying the next direction.'],
+      ['Flood fill','--mint',['grid[r][c] = "0"','=dfs(r, c)'],'one call spreads over a whole connected region, marking it as it goes.'],
+      ['Grid traversal','--violet',['for r in range','for c in range','if r < 0'],'the outer loops visit every cell; the bounds check keeps DFS inside the grid.'],
+      ['Connected components','--pink',['islands += 1'],'each new DFS start is one separate component, so counting starts counts islands.']]),
+    visual:{type:'grid', mode:'islands', rows:R, cols:C, title:'Grid', aside:'(row, column)',
+      legend:[['current cell','--ph'],['on the DFS path','--cyan'],['land','--amber'],['being checked','--coral']]}};
+}
+
+/* ================= 994. Rotting Oranges ================= */
+const CODE_994 = `class Solution:
+    def orangesRotting(self, grid: List[List[int]]) -> int:
+        ROWS, COLS = len(grid), len(grid[0])
+        q = deque()
+        fresh = 0
+        for r in range(ROWS):
+            for c in range(COLS):
+                if grid[r][c] == 1:
+                    fresh += 1
+                elif grid[r][c] == 2:
+                    q.append((r, c))
+
+        minutes = 0
+        dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        while q and fresh > 0:
+            for _ in range(len(q)):
+                r, c = q.popleft()
+                for dr, dc in dirs:
+                    nr, nc = r + dr, c + dc
+                    if 0 <= nr < ROWS and 0 <= nc < COLS and grid[nr][nc] == 1:
+                        grid[nr][nc] = 2
+                        fresh -= 1
+                        q.append((nr, nc))
+            minutes += 1
+        return minutes if fresh == 0 else -1`;
+
+function build994({grid}){
+  const code = CODE_994, L = lineFinder(code);
+  const g = clone(grid), R = g.length, C = g[0].length;
+  const rot = g.map(r => r.map(v => v === 2 ? 0 : null));
+  const q = [];
+  let fresh = 0, minutes = null, cur = null, probe = null, scan = null, nrc = null;
+  const S = recorder(() => {
+    const vars = {q};
+    if (fresh !== null) vars.fresh = fresh;
+    if (minutes !== null) vars.minutes = minutes;
+    if (cur) vars['(r, c)'] = cur;
+    else if (scan) vars['(r, c)'] = scan;
+    if (nrc) vars['(nr, nc)'] = nrc;
+    return {vars, pointers: {}, stack: ['orangesRotting(grid)'], viz: {cells: g, tint: rot, cur, probe, scan, inq: q}};
+  });
+  S(L('ROWS, COLS'),'Setup','Measure the grid',`${R} rows and ${C} columns.`,'Hi, I’m Bit! Uh-oh, some oranges in this crate are going bad.');
+  S(L('q = deque()'),'Setup','Make an empty queue','The queue will hold rotten oranges whose neighbors haven’t been infected yet.','This queue lines up the rotten ones.');
+  S(L('fresh = 0'),'Setup','Count fresh oranges','`fresh` counts oranges that haven’t rotted.','Let’s count the fresh ones.');
+  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++){
+    scan = [r, c]; const v = g[r][c];
+    if (v === 1){ fresh++; S(L('fresh += 1'),'Update',`Fresh at (${r}, ${c})`,`grid[${r}][${c}] is 1. fresh = ${fresh}.`,`A fresh one! That makes ${fresh}.`,`grid[${r}][${c}] == 1  →  True`); }
+    else if (v === 2){ q.push([r, c]); S(L('q.append((r, c))'),'Collect',`Rotten at (${r}, ${c})`,`grid[${r}][${c}] is 2, so it goes in the queue. Every rotten orange starts spreading at the same time.`,'Eww, already rotten. Into the queue!',`grid[${r}][${c}] == 2  →  True`); }
+    else S(L('elif grid[r][c] == 2'),'Check',`Empty at (${r}, ${c})`,`grid[${r}][${c}] is 0, an empty cell.`,'Empty spot.',`grid[${r}][${c}] is 0  →  neither`);
+  }
+  scan = null; minutes = 0;
+  S(L('minutes = 0'),'Setup','Start the clock','`minutes` counts how many rounds of spreading happen.','Clock starts at zero.');
+  S(L('dirs ='),'Setup','Four directions','`dirs` lists the four neighbors: down, up, right, left.','Rot spreads up, down, left and right. Never diagonally!');
+  const DIRS = [[1,0,'below'],[-1,0,'above'],[0,1,'right of'],[0,-1,'left of']];
+  for (;;){
+    const go = q.length > 0 && fresh > 0;
+    S(L('while q and fresh > 0'),'Check', go ? `Minute ${minutes + 1} begins` : 'Stop spreading',
+      go ? `${plural(q.length, 'rotten orange')} in the queue and ${fresh} fresh left, so the rot spreads for another minute.` : fresh === 0 ? 'No fresh oranges are left, so we’re done.' : 'The queue is empty but fresh oranges remain. Nothing can reach them.',
+      go ? `Minute ${minutes + 1}. Spread, rot, spread!` : fresh === 0 ? 'Every orange is rotten. That’s it!' : 'The rot can’t reach the rest.',
+      `q has ${q.length}, fresh = ${fresh}  →  ${go ? 'True' : 'False'}`);
+    if (!go) break;
+    const len = q.length;
+    S(L('for _ in range(len(q))'),'Loop',`Batch of ${len}`,`Only the ${plural(len, 'orange')} in the queue now spread rot this minute. Oranges added during the batch wait for the next minute.`,`This minute’s batch: ${len}. Newcomers wait their turn.`);
+    for (let k = 0; k < len; k++){
+      cur = q.shift(); const [r, c] = cur;
+      S(L('r, c = q.popleft()'),'Update',`Pop (${r}, ${c})`,`Take (${r}, ${c}) off the front of the queue and spread rot to its neighbors.`,`From (${r}, ${c}), spread the rot!`);
+      for (const [dr, dc, name] of DIRS){
+        const nr = r + dr, nc = c + dc; nrc = [nr, nc];
+        const inb = nr >= 0 && nr < R && nc >= 0 && nc < C, v = inb ? g[nr][nc] : null, ok = inb && v === 1;
+        probe = inb ? [nr, nc] : null;
+        S(L('if 0 <= nr'),'Check', ok ? `(${nr}, ${nc}) is fresh` : `(${nr}, ${nc}): skip`,
+          !inb ? `(${nr}, ${nc}), ${name} (${r}, ${c}), is outside the grid.` : v === 0 ? `(${nr}, ${nc}) is empty.` : v === 2 ? `(${nr}, ${nc}) is already rotten.` : `(${nr}, ${nc}), ${name} (${r}, ${c}), is fresh, so it rots now.`,
+          !inb ? 'Off the edge.' : v === 0 ? 'Nobody there.' : v === 2 ? 'Already rotten.' : `Fresh orange ${name} me!`,
+          !inb ? `in bounds  →  False` : `grid[${nr}][${nc}] == 1  →  ${ok ? 'True' : 'False'}`);
+        if (ok){
+          g[nr][nc] = 2; rot[nr][nc] = minutes + 1;
+          S(L('grid[nr][nc] = 2'),'Choose',`(${nr}, ${nc}) rots`,`Set grid[${nr}][${nc}] = 2. It rotted at minute ${minutes + 1}.`,`Gotcha! (${nr}, ${nc}) is rotten now.`);
+          fresh--;
+          S(L('fresh -= 1'),'Update',`fresh = ${fresh}`,`One fewer fresh orange.`,`${fresh} fresh left.`);
+          q.push([nr, nc]);
+          S(L('q.append((nr, nc))'),'Collect',`Queue (${nr}, ${nc})`,'Add it to the back of the queue. It spreads rot next minute.','Into the queue. It spreads next minute.');
+        }
+      }
+      probe = null; nrc = null;
+    }
+    cur = null; minutes++;
+    S(L('minutes += 1'),'Update',`minutes = ${minutes}`,'The whole batch is done, so one minute has passed.',`Tick tock! Minute ${minutes} is over.`);
+  }
+  const ans = fresh === 0 ? minutes : -1;
+  S(L('return minutes'),'Done',`Answer: ${ans}`, ans >= 0 ? `Every orange is rotten after ${plural(ans, 'minute')}.` : 'Some oranges can never rot, so the answer is -1.', ans >= 0 ? `Mission complete! ${plural(ans, 'minute')} to rot them all.` : 'Some oranges are safe forever. Answer: minus one.', `fresh == 0  →  ${fresh === 0 ? 'True' : 'False'}`);
+  return {code, steps: S.steps, complexity:'O(rows·cols) time and space',
+    subtitle:'Rot spreads to adjacent fresh oranges every minute. How long until none are fresh?',
+    lineNotes: mkNotes(L, [
+      ['ROWS, COLS','Grid size.'], ['q = deque()','Queue of rotten oranges waiting to spread.'], ['fresh = 0','How many fresh oranges remain.'],
+      ['if grid[r][c] == 1','Count fresh oranges.'], ['fresh += 1','One more fresh orange.'], ['elif grid[r][c] == 2','Rotten oranges start in the queue.'],
+      ['q.append((r, c))','Every rotten orange is a starting point.'], ['minutes = 0','Rounds of spreading so far.'], ['dirs =','The four neighbor directions.'],
+      ['while q and fresh > 0','Keep going while something can still spread and something can still rot.'],
+      ['for _ in range(len(q))','Process exactly the oranges that were rotten at the start of this minute.'],
+      ['r, c = q.popleft()','Take the next rotten orange.'], ['if 0 <= nr','Is the neighbor inside the grid and fresh?'],
+      ['grid[nr][nc] = 2','It rots.'], ['fresh -= 1','One fewer fresh orange.'], ['q.append((nr, nc))','It will spread next minute.'],
+      ['minutes += 1','One round of spreading is finished.'], ['return minutes','-1 if some orange could never be reached.']]),
+    tags: mkTags(L, [
+      ['BFS','--cyan',['q = deque()','r, c = q.popleft()','q.append((nr, nc))'],'a queue processes oranges in the order they rotted, so rot spreads outward evenly.'],
+      ['Multi-source BFS','--pink',['q.append((r, c))'],'every rotten orange starts in the queue together, so rot spreads from all of them at once.'],
+      ['Level by level','--violet',['for _ in range(len(q))','minutes += 1'],'each pass over the current queue is exactly one minute.'],
+      ['Grid traversal','--mint',['dirs =','if 0 <= nr'],'neighbors are found with direction offsets plus a bounds check.']]),
+    visual:{type:'grid', mode:'oranges', rows:R, cols:C, title:'Crate', aside:'tN = minute it rotted',
+      legend:[['fresh','--amber'],['rotten','--coral'],['in the queue','--cyan'],['neighbor being checked','--coral']]}};
+}
+
+/* ================= 207. Course Schedule ================= */
+const CODE_207 = `class Solution:
+    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
+        graph = [[] for _ in range(numCourses)]
+        indegree = [0] * numCourses
+        for course, pre in prerequisites:
+            graph[pre].append(course)
+            indegree[course] += 1
+
+        q = deque(c for c in range(numCourses) if indegree[c] == 0)
+        taken = 0
+        while q:
+            cur = q.popleft()
+            taken += 1
+            for nxt in graph[cur]:
+                indegree[nxt] -= 1
+                if indegree[nxt] == 0:
+                    q.append(nxt)
+        return taken == numCourses`;
+
+function build207({numCourses: n, prerequisites: pr}){
+  const code = CODE_207, L = lineFinder(code);
+  const graph = Array.from({length: n}, () => []), indeg = new Array(n).fill(0), order = {};
+  let q = null, taken = null, cur = null, nxt = null, built = 0, hot = null, phase = 0;
+  const S = recorder(() => {
+    const vars = {};
+    if (phase >= 1) vars.graph = graph;
+    if (phase >= 2) vars.indegree = indeg;
+    if (q) vars.q = q;
+    if (taken !== null) vars.taken = taken;
+    if (cur !== null) vars.cur = cur;
+    if (nxt !== null) vars.nxt = nxt;
+    return {vars, pointers: nxt !== null ? {indegree: {nxt}} : {}, stack: ['canFinish(numCourses, prerequisites)'],
+      viz: {built, indeg, cur, q: q || [], order, hot}};
+  });
+  phase = 1; S(L('graph = [[]'),'Setup','Empty adjacency list',`One empty list per course, ${n} in all. graph[a] will list the courses that a unlocks.`,'Hi, I’m Bit! Let’s map which classes unlock which.');
+  phase = 2; S(L('indegree = [0]'),'Setup','Zero prerequisites so far','`indegree[c]` counts the unmet prerequisites of course c.','Every course starts with zero locks.');
+  for (const [course, pre] of pr){
+    graph[pre].push(course); built++; hot = [pre, course];
+    S(L('graph[pre].append(course)'),'Update',`Edge ${pre} → ${course}`,`Course ${course} needs ${pre} first, so add an arrow from ${pre} to ${course}.`,`${pre} unlocks ${course}. Drawing an arrow!`);
+    indeg[course]++;
+    S(L('indegree[course] += 1'),'Update',`indegree[${course}] = ${indeg[course]}`,`Course ${course} now waits on ${plural(indeg[course], 'prerequisite')}.`,`${course} has ${plural(indeg[course], 'lock')} now.`);
+  }
+  hot = null; q = [];
+  for (let c = 0; c < n; c++) if (indeg[c] === 0) q.push(c);
+  S(L('q = deque('),'Collect','Queue the free courses', q.length ? `Courses with indegree 0 need nothing first: ${q.join(', ')}. They can be taken right away.` : 'No course has indegree 0, so nothing can be taken at all.', q.length ? `No locks on ${q.join(' and ')}. They go in the queue!` : 'Every course is locked. Uh-oh.');
+  taken = 0;
+  S(L('taken = 0'),'Setup','Nothing taken yet','`taken` counts courses completed.','Courses finished: zero.');
+  for (;;){
+    const go = q.length > 0;
+    S(L('while q'),'Check', go ? 'Something is ready' : 'Queue is empty', go ? `The queue holds ${q.join(', ')}, all ready to take.` : 'No course is ready to take, so the loop ends.', go ? 'Someone’s ready to go!' : 'Nobody left in line.', `q = [${q.join(', ')}]  →  ${go ? 'True' : 'False'}`);
+    if (!go) break;
+    cur = q.shift(); nxt = null;
+    S(L('cur = q.popleft()'),'Update',`Take course ${cur}`,`Course ${cur} has no unmet prerequisites, so take it now.`,`Taking course ${cur}!`);
+    taken++; order[cur] = taken;
+    S(L('taken += 1'),'Collect',`taken = ${taken}`,`Course ${cur} is done. That’s ${taken} of ${n}.`,`${taken} of ${n} done!`);
+    for (const x of graph[cur]){
+      nxt = x; hot = [cur, x]; indeg[x]--;
+      S(L('indegree[nxt] -= 1'),'Update',`indegree[${x}] = ${indeg[x]}`,`Finishing ${cur} removes one prerequisite from ${x}. It now waits on ${indeg[x]}.`,`One lock off course ${x}.`);
+      if (indeg[x] === 0){ q.push(x); S(L('q.append(nxt)'),'Collect',`${x} is unlocked`,`indegree[${x}] hit 0, so course ${x} joins the queue.`,`Course ${x} is unlocked! Into the queue.`,`indegree[${x}] == 0  →  True`); }
+      else S(L('if indegree[nxt] == 0'),'Check',`${x} still locked`,`Course ${x} still needs ${plural(indeg[x], 'more prerequisite')}.`,`${x} is still waiting on ${indeg[x]}.`,`indegree[${x}] == 0  →  False`);
+    }
+    hot = null; nxt = null;
+  }
+  const ok = taken === n;
+  S(L('return taken == numCourses'),'Done', ok ? 'Answer: True' : 'Answer: False', ok ? `All ${n} courses were taken, so the schedule works.` : `Only ${taken} of ${n} were taken. The rest sit in a cycle and can never reach indegree 0.`, ok ? 'Mission complete! Every course can be finished.' : 'Stuck in a loop of prerequisites. Can’t finish them all!', `${taken} == ${n}  →  ${ok ? 'True' : 'False'}`);
+  // layout layers
+  const indeg2 = new Array(n).fill(0); pr.forEach(([c]) => indeg2[c]++);
+  const layer = new Array(n).fill(-1); let frontier = [];
+  for (let c = 0; c < n; c++) if (!indeg2[c]){ layer[c] = 0; frontier.push(c); }
+  while (frontier.length){ const nf = []; for (const u of frontier) for (const v of graph[u]){ if (--indeg2[v] === 0){ layer[v] = layer[u] + 1; nf.push(v); } } frontier = nf; }
+  const maxL = Math.max(0, ...layer);
+  for (let c = 0; c < n; c++) if (layer[c] < 0) layer[c] = maxL + 1;
+  return {code, steps: S.steps, complexity:'O(V + E) time and space',
+    subtitle:'Can every course be finished? Kahn’s algorithm (BFS topological sort).',
+    lineNotes: mkNotes(L, [
+      ['graph = [[]','Adjacency list: graph[a] holds courses that need a.'], ['indegree = [0]','Unmet prerequisites per course.'],
+      ['for course, pre in','Read each prerequisite pair.'], ['graph[pre].append(course)','Arrow from the prerequisite to the course.'], ['indegree[course] += 1','One more prerequisite to meet.'],
+      ['q = deque(','Courses with no prerequisites can start immediately.'], ['taken = 0','Courses completed.'], ['while q','Keep going while something is ready.'],
+      ['cur = q.popleft()','Take a ready course.'], ['taken += 1','Count it.'], ['for nxt in graph[cur]','Visit every course that depended on it.'],
+      ['indegree[nxt] -= 1','One prerequisite met.'], ['if indegree[nxt] == 0','All prerequisites met?'], ['q.append(nxt)','Ready to take.'],
+      ['return taken == numCourses','If a cycle exists, some courses are never taken.']]),
+    tags: mkTags(L, [
+      ['Topological sort','--violet',['q = deque(','cur = q.popleft()','q.append(nxt)'],'Kahn’s algorithm takes courses in an order that respects every prerequisite.'],
+      ['Indegree','--amber',['indegree = [0]','indegree[course] += 1','indegree[nxt] -= 1','if indegree[nxt] == 0'],'a course is ready when its count of unmet prerequisites reaches 0.'],
+      ['Adjacency list','--mint',['graph = [[]','graph[pre].append(course)'],'each course lists the courses it unlocks.'],
+      ['BFS','--cyan',['while q','cur = q.popleft()'],'ready courses are processed from a queue.'],
+      ['Cycle detection','--coral',['return taken == numCourses'],'courses in a cycle never reach indegree 0, so they are never taken.']]),
+    visual:{type:'graph', n, edges: pr.map(([c, p]) => [p, c]), layer, title:'Prerequisite graph', aside:'arrow a → b means take a before b; badge = indegree',
+      legend:[['taken','--mint'],['in the queue','--cyan'],['indegree 0','--mint'],['still locked','--amber']]}};
+}
+
+/* ================= 102. Level order ================= */
+const CODE_102 = `class Solution:
+    def levelOrder(self, root: Optional[TreeNode]) -> List[List[int]]:
+        res = []
+        q = deque([root]) if root else deque()
+        while q:
+            level = []
+            for _ in range(len(q)):
+                node = q.popleft()
+                level.append(node.val)
+                if node.left:
+                    q.append(node.left)
+                if node.right:
+                    q.append(node.right)
+            res.append(level)
+        return res`;
+
+function build102({nodes}){
+  const code = CODE_102, L = lineFinder(code);
+  const depth = {}; (function d(id, k){ if (id == null) return; depth[id] = k; d(nodes[id].left, k + 1); d(nodes[id].right, k + 1); })(0, 0);
+  const levels = Math.max(...Object.values(depth)) + 1;
+  let q = [], level = null, cur = null; const res = [], done = {};
+  const val = id => nodes[id].val;
+  const S = recorder(() => {
+    const vars = {q: q.map(val)};
+    if (level) vars.level = level;
+    vars.res = res;
+    if (cur != null) vars['node.val'] = val(cur);
+    return {vars, pointers: {}, stack: ['levelOrder(root)'], viz: {cur, q, done}};
+  });
+  S(L('res = []'),'Setup','Make an empty res','`res` will hold one list of values per level.','Hi, I’m Bit! We’ll read this tree one floor at a time, top to bottom.');
+  q = [0];
+  S(L('q = deque'),'Setup','Queue the root',`The queue starts with the root, ${val(0)}.`,`The root, ${val(0)}, gets in line first.`);
+  let lvl = 0;
+  for (;;){
+    const go = q.length > 0;
+    S(L('while q'),'Check', go ? `Level ${lvl} starts` : 'Queue is empty', go ? `The queue holds ${plural(q.length, 'node')}, exactly the nodes on level ${lvl}.` : 'No nodes left to visit.', go ? `Next floor! ${plural(q.length, 'node')} waiting.` : 'Nobody left in line. Done!', `q has ${q.length}  →  ${go ? 'True' : 'False'}`);
+    if (!go) break;
+    level = [];
+    S(L('level = []'),'Setup',`Start level ${lvl}`,'A fresh list for this level’s values.','New empty list for this floor.');
+    const size = q.length;
+    S(L('for _ in range(len(q))'),'Loop',`${plural(size, 'node')} on level ${lvl}`,`len(q) is ${size} right now. Exactly that many pops belong to level ${lvl}; children added during the loop wait for the next level.`,`Exactly ${size} on this floor. Kids added now wait for the next round.`);
+    for (let k = 0; k < size; k++){
+      cur = q.shift(); const nd = nodes[cur];
+      S(L('node = q.popleft()'),'Update',`Visit ${nd.val}`,`Pop ${nd.val} from the front of the queue.`,`Next in line: ${nd.val}!`);
+      level.push(nd.val); done[cur] = lvl;
+      S(L('level.append(node.val)'),'Collect',`Record ${nd.val}`,`level is now \`${fmt(level)}\`.`,`${nd.val} goes on floor ${lvl}’s list.`);
+      for (const side of ['left', 'right']){
+        const ch = nd[side];
+        if (ch != null){ q.push(ch); S(L(`q.append(node.${side})`),'Collect',`Queue ${side} child ${val(ch)}`,`${nd.val} has a ${side} child, ${val(ch)}. It joins the back of the queue for level ${lvl + 1}.`,`${val(ch)} gets in line.`,`node.${side}  →  ${val(ch)}`); }
+        else S(L(`if node.${side}`),'Check',`No ${side} child`,`${nd.val} has no ${side} child.`,`No ${side} kid here.`,`node.${side}  →  None`);
+      }
+    }
+    cur = null; res.push([...level]);
+    S(L('res.append(level)'),'Collect',`Level ${lvl} done`,`Add \`${fmt(level)}\` to res.`,`Floor ${lvl} complete: ${fmt(level)}!`);
+    lvl++;
+  }
+  S(L('return res'),'Done','All levels read',`Return \`${JSON.stringify(res).replace(/,/g, ', ')}\`.`,`Mission complete! ${plural(res.length, 'floor')}, top to bottom.`);
+  return {code, steps: S.steps, complexity:'O(n) time, O(n) space',
+    subtitle:'Return node values level by level, left to right.', goal:{var:'res', total: levels, label:'levels'},
+    varNotes:{q:'values waiting in the queue'},
+    lineNotes: mkNotes(L, [
+      ['res = []','One list per level.'], ['q = deque','The queue starts with the root.'], ['while q','Keep going while nodes are waiting.'],
+      ['level = []','Values for the current level.'], ['for _ in range(len(q))','Freeze the level size before children are added.'],
+      ['node = q.popleft()','Visit the next node in line.'], ['level.append(node.val)','Record its value.'],
+      ['if node.left','Is there a left child?'], ['q.append(node.left)','It belongs to the next level.'],
+      ['if node.right','Is there a right child?'], ['q.append(node.right)','It belongs to the next level.'],
+      ['res.append(level)','This level is complete.'], ['return res','All levels, top to bottom.']]),
+    tags: mkTags(L, [
+      ['BFS','--cyan',['q = deque','node = q.popleft()','q.append(node.left)','q.append(node.right)'],'a queue visits nodes in order of distance from the root.'],
+      ['Level by level','--violet',['for _ in range(len(q))','res.append(level)'],'taking len(q) before the loop separates one level from the next.'],
+      ['Binary tree','--mint',['if node.left','if node.right'],'each node has at most a left and a right child.']]),
+    visual:{type:'bintree', nodes, title:'Tree', aside:'colored by level once visited',
+      legend:[['current node','--ph'],['in the queue','--cyan'],['visited','--mint']]}};
+}
+
+/* ================= 56. Merge Intervals ================= */
+const CODE_56 = `class Solution:
+    def merge(self, intervals: List[List[int]]) -> List[List[int]]:
+        intervals.sort(key=lambda i: i[0])
+        output = [intervals[0]]
+
+        for start, end in intervals[1:]:
+            lastEnd = output[-1][1]
+            if start <= lastEnd:
+                output[-1][1] = max(lastEnd, end)
+            else:
+                output.append([start, end])
+        return output`;
+
+function build56({intervals: input}){
+  const code = CODE_56, L = lineFinder(code);
+  const intervals = input.map(x => [...x]);
+  intervals.sort((a, b) => a[0] - b[0]);
+  const rows = clone(intervals);
+  let output = null, start = null, end = null, lastEnd = null, cur = null; const group = {};
+  const S = recorder(() => {
+    const vars = {intervals};
+    if (output) vars.output = output;
+    if (start !== null){ vars.start = start; vars.end = end; }
+    if (lastEnd !== null) vars.lastEnd = lastEnd;
+    return {vars, pointers: {}, stack: ['merge(intervals)'], viz: {cur, group, out: output || [], lastEnd}};
+  });
+  S(L('intervals.sort'),'Setup','Sort by start',`Sorted by start time: \`${JSON.stringify(intervals).replace(/,\[/g, ', [')}\`. Now any interval that overlaps the previous one comes right after it.`,'Hi, I’m Bit! First, line the intervals up by start time.');
+  output = [intervals[0]]; cur = 0; group[0] = 0;
+  S(L('output = [intervals[0]]'),'Setup','Seed the output',`output starts with the first interval, \`${fmt(intervals[0])}\`.`,`${fmt(intervals[0])} goes in first.`);
+  let aliasShown = false;
+  for (let k = 1; k < intervals.length; k++){
+    [start, end] = intervals[k]; cur = k; lastEnd = null;
+    S(L('for start, end in'),'Loop',`Next: [${start}, ${end}]`,`start = ${start}, end = ${end}.`,`Next up: ${start} to ${end}.`);
+    lastEnd = output[output.length - 1][1];
+    S(L('lastEnd ='),'Update',`lastEnd = ${lastEnd}`,`The last interval in output ends at ${lastEnd}.`,`The last block ends at ${lastEnd}.`);
+    const overlap = start <= lastEnd;
+    S(L('if start <= lastEnd'),'Compare', overlap ? 'They overlap' : 'No overlap', overlap ? `${start} starts before (or at) ${lastEnd}, so [${start}, ${end}] overlaps the last interval.` : `${start} starts after ${lastEnd}, so there’s a gap. No overlap.`, overlap ? 'They touch! Time to merge.' : 'There’s a gap. No merging.', `${start} <= ${lastEnd}  →  ${overlap ? 'True' : 'False'}`);
+    if (overlap){
+      const ne = Math.max(lastEnd, end); output[output.length - 1][1] = ne; group[k] = output.length - 1;
+      const alias = output.length === 1 && !aliasShown ? ' Note: output[0] is the same list object as intervals[0], so intervals[0] changes too.' : '';
+      if (alias) aliasShown = true;
+      S(L('output[-1][1] = max'),'Update',`Merge into ${fmt(output[output.length - 1])}`,`Stretch the last interval’s end to max(${lastEnd}, ${end}) = ${ne}.${alias}`, ne > lastEnd ? `Stretch it out to ${ne}!` : `Already covered. It stays at ${ne}.`, `max(${lastEnd}, ${end})  →  ${ne}`);
+    } else {
+      output.push([start, end]); group[k] = output.length - 1;
+      S(L('output.append'),'Collect','Start a new interval',`Add \`${fmt([start, end])}\` to output as a new block.`,`${fmt([start, end])} starts a new block.`);
+    }
+  }
+  cur = null; start = null; lastEnd = null;
+  S(L('return output'),'Done',`${plural(output.length, 'merged interval')}`,`Return \`${JSON.stringify(output).replace(/,\[/g, ', [')}\`.`,`Mission complete! ${plural(output.length, 'block')} left after merging.`);
+  return {code, steps: S.steps, complexity:'O(n log n) time, O(n) space',
+    subtitle:'Merge every set of overlapping intervals.',
+    lineNotes: mkNotes(L, [
+      ['intervals.sort','Sort by start so overlaps sit next to each other.'], ['output = [intervals[0]]','The first interval starts the output.'],
+      ['for start, end in','Walk through the rest in order.'], ['lastEnd =','Where the most recent merged interval ends.'],
+      ['if start <= lastEnd','Overlap check: does this one start before the last one ends?'], ['output[-1][1] = max','Extend the last interval instead of adding a new one.'],
+      ['output.append','No overlap, so start a new interval.'], ['return output','The merged intervals.']]),
+    tags: mkTags(L, [
+      ['Sorting','--violet',['intervals.sort'],'once sorted by start, overlapping intervals sit next to each other.'],
+      ['Intervals','--cyan',['if start <= lastEnd'],'two sorted intervals overlap when the next start is at or before the last end.'],
+      ['Greedy','--mint',['output[-1][1] = max','output.append'],'each interval either extends the last merged one or starts a new one, with no going back.']]),
+    visual:{type:'intervals', rows, title:'Timeline', aside:'sorted input on top, output below',
+      legend:[['current interval','--ph'],['merged into output block (same color)','--mint'],['lastEnd','--amber']]}};
+}
+
+/* ================= registry ================= */
+const pyJSON = s => JSON.parse(s.trim().replace(/\bNone\b/g, 'null').replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false').replace(/'/g, '"'));
+const rhs = s => s.includes('=') ? s.slice(s.indexOf('=') + 1) : s;
+const fail = m => { throw new Error(m); };
+function asJSON(text, hint){ try { return pyJSON(rhs(text)); } catch { fail(`Couldn’t read that. Use this format: ${hint}`); } }
+
+function parseTree(arr){
+  const nodes = [{id: 0, val: arr[0], left: null, right: null}], q = [0]; let i = 1;
+  while (q.length && i < arr.length){
+    const p = q.shift();
+    for (const side of ['left', 'right']){
+      if (i < arr.length && arr[i] != null){ const id = nodes.length; nodes.push({id, val: arr[i], left: null, right: null}); nodes[p][side] = id; q.push(id); }
+      i++;
+    }
+  }
+  return nodes;
+}
+
+const PROBLEMS = [
+  {id:'lc78', group:'Backtracking', num:78, name:'Subsets', input:'nums = [1, 2, 3]', build: build78,
+    parse: t => { const v = asJSON(t, 'nums = [1, 2, 3]'); if (!Array.isArray(v) || !v.length || !v.every(Number.isInteger)) fail('Enter a list of integers, like nums = [1, 2, 3].'); if (v.length > 4) fail('Use 4 numbers or fewer so the tree fits on screen.'); return {nums: v}; }},
+  {id:'lc90', group:'Backtracking', num:90, name:'Subsets II', input:'nums = [1, 2, 2]', build: build90,
+    parse: t => { const v = asJSON(t, 'nums = [1, 2, 2]'); if (!Array.isArray(v) || !v.length || !v.every(Number.isInteger)) fail('Enter a list of integers, like nums = [1, 2, 2].'); if (v.length > 4) fail('Use 4 numbers or fewer so the tree fits on screen.'); return {nums: v}; }},
+  {id:'lc46', group:'Backtracking', num:46, name:'Permutations', input:'nums = [1, 2, 3]', build: build46,
+    parse: t => { const v = asJSON(t, 'nums = [1, 2, 3]'); if (!Array.isArray(v) || !v.length || !v.every(Number.isInteger)) fail('Enter a list of integers, like nums = [1, 2, 3].'); if (v.length > 3) fail('Use 3 numbers or fewer. Four numbers make 24 orderings and hundreds of steps.'); if (new Set(v).size !== v.length) fail('Permutations needs distinct numbers.'); return {nums: v}; }},
+  {id:'lc1239', group:'Backtracking', num:1239, name:'Max Length of a Concatenated String with Unique Characters', short:'Max Length Concatenated String', input:'arr = ["un", "iq", "ue"]', build: build1239,
+    parse: t => { const v = asJSON(t, 'arr = ["un", "iq", "ue"]'); if (!Array.isArray(v) || !v.length || !v.every(s => typeof s === 'string' && /^[a-z]{1,6}$/.test(s))) fail('Enter lowercase strings of up to 6 letters, like arr = ["un", "iq", "ue"].'); if (v.length > 4) fail('Use 4 strings or fewer so the tree fits on screen.'); return {arr: v}; }},
+  {id:'lc200', group:'Graphs and grids', num:200, name:'Number of Islands', input:'grid = [["1","1","0","0","0"],["1","0","0","1","1"],["0","0","1","0","0"],["0","0","0","0","1"]]', build: build200,
+    parse: t => { const v = asJSON(t, 'grid = [["1","0"],["0","1"]]'); if (!Array.isArray(v) || !v.length || !v.every(r => Array.isArray(r) && r.length === v[0].length && r.length)) fail('The grid must be a list of equal-length rows.'); const g = v.map(r => r.map(x => String(x))); if (!g.flat().every(x => x === '0' || x === '1')) fail('Cells must be "1" (land) or "0" (water).'); if (g.length > 6 || g[0].length > 6) fail('Keep the grid at 6 by 6 or smaller.'); if (g.flat().filter(x => x === '1').length > 14) fail('Use 14 land cells or fewer to keep the walkthrough short.'); return {grid: g}; }},
+  {id:'lc994', group:'Graphs and grids', num:994, name:'Rotting Oranges', input:'grid = [[2,1,1],[1,1,0],[0,1,1]]', build: build994,
+    parse: t => { const v = asJSON(t, 'grid = [[2,1,1],[1,1,0],[0,1,1]]'); if (!Array.isArray(v) || !v.length || !v.every(r => Array.isArray(r) && r.length === v[0].length && r.length)) fail('The grid must be a list of equal-length rows.'); if (!v.flat().every(x => x === 0 || x === 1 || x === 2)) fail('Cells must be 0 (empty), 1 (fresh) or 2 (rotten).'); if (v.length > 5 || v[0].length > 5) fail('Keep the grid at 5 by 5 or smaller.'); return {grid: v}; }},
+  {id:'lc207', group:'Graphs and grids', num:207, name:'Course Schedule', input:'numCourses = 5, prerequisites = [[1,0],[2,0],[3,1],[3,2],[4,3]]', build: build207,
+    parse: t => { const m1 = t.match(/numCourses\s*=\s*(\d+)/), m2 = t.match(/prerequisites\s*=\s*(\[[\s\S]*\])/); if (!m1 || !m2) fail('Use this format: numCourses = 3, prerequisites = [[1,0],[2,1]]'); const n = +m1[1]; let p; try { p = pyJSON(m2[1]); } catch { fail('Couldn’t read prerequisites. Example: [[1,0],[2,1]]'); } if (n < 1 || n > 8) fail('Use between 1 and 8 courses.'); if (!Array.isArray(p) || p.length > 12 || !p.every(e => Array.isArray(e) && e.length === 2 && e.every(x => Number.isInteger(x) && x >= 0 && x < n) && e[0] !== e[1])) fail('Each prerequisite is [course, pre] with both below numCourses. Use 12 pairs or fewer.'); return {numCourses: n, prerequisites: p}; }},
+  {id:'lc102', group:'Trees', num:102, name:'Binary Tree Level Order Traversal', short:'Level Order Traversal', input:'root = [3, 9, 20, null, null, 15, 7]', build: build102,
+    parse: t => { const v = asJSON(t, 'root = [3, 9, 20, null, null, 15, 7]'); if (!Array.isArray(v) || !v.length || v[0] == null || !v.every(x => x === null || Number.isInteger(x))) fail('Use LeetCode’s format, like root = [3, 9, 20, null, null, 15, 7].'); const nodes = parseTree(v); if (nodes.length > 12) fail('Use 12 nodes or fewer.'); return {nodes}; }},
+  {id:'lc56', group:'Intervals', num:56, name:'Merge Intervals', input:'intervals = [[8,10],[1,3],[15,18],[2,6],[9,12]]', build: build56,
+    parse: t => { const v = asJSON(t, 'intervals = [[1,3],[2,6]]'); if (!Array.isArray(v) || !v.length || !v.every(e => Array.isArray(e) && e.length === 2 && e.every(x => Number.isInteger(x) && x >= 0 && x <= 40) && e[0] <= e[1])) fail('Each interval is [start, end] with 0 ≤ start ≤ end ≤ 40.'); if (v.length > 7) fail('Use 7 intervals or fewer.'); return {intervals: v}; }}
+];
+
+/* ================= DOM ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rich = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+const NS = 'http://www.w3.org/2000/svg';
+function sv(tag, attrs = {}, text){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
+
+const PHASE = {Setup:'--dim',Start:'--cyan',Enter:'--cyan',Check:'--amber',Compare:'--amber',Choose:'--mint',Explore:'--violet',Loop:'--violet',Backtrack:'--coral',Collect:'--pink',Update:'--cyan',Return:'--muted',Done:'--mint'};
+const TAG_COLORS = ['--coral','--cyan','--violet','--mint','--pink','--amber'];
+
+const KW = new Set(('def class return if elif else for while in not and or is None True False import from as with try except finally raise lambda yield pass break continue global nonlocal ' +
+  'function const let var new this public private protected static final void int long boolean char double float null true false switch case default do typeof of instanceof auto struct template typename using namespace include std vector unordered_map map set fn mut impl match func').split(' '));
+function hl(line){
+  const re = /(#.*$|\/\/.*$)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)(\s*\()?/g;
+  let out = '', last = 0, m;
+  while ((m = re.exec(line))){
+    out += esc(line.slice(last, m.index));
+    if (m[1]) out += `<span class="t-s">${esc(m[1])}</span>`;
+    else if (m[2]) out += `<span class="t-n">${esc(m[2])}</span>`;
+    else if (m[3]) out += `<span class="t-n">${m[3]}</span>`;
+    else if (m[4]){
+      const w = m[4];
+      if (KW.has(w)) out += `<span class="t-k">${w}</span>`;
+      else if (m[5]) out += `<span class="t-f">${w}</span>`;
+      else if (/^[A-Z]/.test(w)) out += `<span class="t-c">${w}</span>`;
+      else out += esc(w);
+      if (m[5]) out += esc(m[5]);
+    }
+    last = re.lastIndex;
+  }
+  return out + esc(line.slice(last));
+}
+
+/* ---------- visuals ---------- */
+const VIZ = {};
+
+VIZ.rtree = {
+  build(v, box){
+    const nodes = v.nodes, pos = {}; let leaf = 0, maxD = 0;
+    (function place(id, d){
+      maxD = Math.max(maxD, d); const nd = nodes[id];
+      if (!nd.kids.length){ pos[id] = {x: leaf++, d}; return; }
+      nd.kids.forEach(k => place(k, d + 1));
+      pos[id] = {x: (pos[nd.kids[0]].x + pos[nd.kids[nd.kids.length - 1]].x) / 2, d};
+    })(0, 0);
+    const W = 680, left = v.levels ? 58 : 12, right = 22, rowH = 62, top = 24, usable = W - left - right, gap = usable / leaf;
+    const hasCap = nodes.some(n => n.cap), H = top + maxD * rowH + (hasCap ? 40 : 26);
+    const X = x => left + (x + .5) * gap, Y = d => top + d * rowH;
+    const r = gap < 34 ? 10 : gap < 48 ? 12 : 14;
+    const svg = sv('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': v.title});
+    if (v.levels) v.levels.forEach((t, d) => { if (d <= maxD) svg.appendChild(sv('text', {class: 'depth', x: 2, y: Y(d) + 4}, t)); });
+    const gE = sv('g'), gN = sv('g'); svg.append(gE, gN);
+    const refs = {nodes: [], edges: [], caps: [], rets: []};
+    nodes.forEach(nd => {
+      const p = pos[nd.id], x = X(p.x), y = Y(p.d);
+      if (nd.parent != null){
+        const q = pos[nd.parent], px = X(q.x), py = Y(q.d);
+        const e = sv('path', {d: `M${px},${py + r} L${x},${y - r}`, class: 'edge'}); gE.appendChild(e);
+        let lbl = null; const take = nd.edge.startsWith('+');
+        if (nd.edge && Math.abs(x - px) > 24){
+          lbl = sv('text', {class: 'elabel' + (take ? ' take' : ''), x: (px + x) / 2 + (x < px ? -6 : 6), y: (py + y) / 2 + 4, 'text-anchor': x < px ? 'end' : 'start'}, nd.edge);
+          gE.appendChild(lbl);
+        }
+        refs.edges.push({id: nd.id, line: e, lbl, take});
+      }
+      const g = sv('g', {class: 'node'});
+      g.append(sv('circle', {class: 'halo', cx: x, cy: y, r}), sv('circle', {cx: x, cy: y, r}), sv('text', {x, y, 'font-size': r < 12 ? 10 : 12}, nd.label));
+      gN.appendChild(g); refs.nodes.push({id: nd.id, g});
+      const rt = sv('text', {class: 'ret', x: x + r + 3, y: y - r + 3}); gN.appendChild(rt); refs.rets.push({id: nd.id, t: rt});
+      if (nd.cap){
+        const fs = Math.max(9, Math.min(13, gap / (nd.cap.length * .66)));
+        const c = sv('text', {class: 'llabel', x, y: y + r + 15, 'font-size': fs}, nd.cap); gN.appendChild(c); refs.caps.push({id: nd.id, t: c});
+      }
+    });
+    box.appendChild(svg); this.refs = refs;
+  },
+  render(s){
+    const z = s.viz, R = this.refs, on = new Set(z.stack), active = z.stack[z.stack.length - 1], fin = z.fin, ret = z.ret || {};
+    R.nodes.forEach(({id, g}) => g.setAttribute('class', 'node ' + (id === active ? 'active' : on.has(id) ? 'stack' : (fin[id] || ''))));
+    R.edges.forEach(({id, line, lbl, take}) => {
+      const st = on.has(id) ? 'path' : fin[id] === 'pruned' ? 'pruned' : fin[id] ? 'seen' : '';
+      line.setAttribute('class', 'edge ' + st);
+      if (lbl) lbl.setAttribute('class', 'elabel' + (take ? ' take' : '') + (st ? ' ' + st : ''));
+    });
+    R.caps.forEach(({id, t}) => t.setAttribute('class', 'llabel' + (fin[id] === 'leaf' ? ' got' : '')));
+    R.rets.forEach(({id, t}) => { t.textContent = ret[id] !== undefined ? '=' + ret[id] : ''; });
+  }
+};
+
+VIZ.grid = {
+  build(v, box){
+    const wrap = document.createElement('div'); wrap.className = 'gv';
+    wrap.style.gridTemplateColumns = `20px repeat(${v.cols}, minmax(30px, 56px))`;
+    const cell = (cls, txt) => { const d = document.createElement('div'); d.className = cls; d.textContent = txt; wrap.appendChild(d); return d; };
+    cell('gh', '');
+    for (let c = 0; c < v.cols; c++) cell('gh', c);
+    this.cells = [];
+    for (let r = 0; r < v.rows; r++){
+      cell('gh', r); this.cells.push([]);
+      for (let c = 0; c < v.cols; c++) this.cells[r].push(cell('gcell', ''));
+    }
+    this.mode = v.mode; box.appendChild(wrap);
+  },
+  render(s){
+    const z = s.viz, key = a => a ? a[0] + ',' + a[1] : '#';
+    const path = new Set((z.path || []).map(key)), inq = new Set((z.inq || []).map(key));
+    this.cells.forEach((row, r) => row.forEach((d, c) => {
+      const v = z.cells[r][c], cl = ['gcell'], k = r + ',' + c; let html = '';
+      if (this.mode === 'islands'){
+        const t = z.tint[r][c];
+        if (t){ cl.push('sunk'); d.style.setProperty('--tc', `var(${PALETTE[(t - 1) % PALETTE.length]})`); html = `<b>0</b><i>#${t}</i>`; }
+        else if (v === '1'){ cl.push('land'); html = '<b>1</b>'; }
+        else { cl.push('water'); html = '<b>0</b>'; }
+      } else {
+        if (v === 1) cl.push('fresh');
+        else if (v === 2){ cl.push('rotten'); const t = z.tint[r][c]; html = `<i>${t === 0 ? 'start' : 't' + t}</i>`; }
+        else cl.push('gempty');
+      }
+      if (inq.has(k)) cl.push('inq');
+      if (key(z.scan) === k) cl.push('gscan');
+      if (path.has(k)) cl.push('path');
+      if (key(z.probe) === k) cl.push('probe');
+      if (key(z.cur) === k) cl.push('cur');
+      d.className = cl.join(' '); d.innerHTML = html;
+    }));
+  }
+};
+
+VIZ.bintree = {
+  build(v, box){
+    const nodes = v.nodes, pos = {}; let idx = 0, maxD = 0;
+    (function walk(id, d){ if (id == null) return; maxD = Math.max(maxD, d); walk(nodes[id].left, d + 1); pos[id] = {x: idx++, d}; walk(nodes[id].right, d + 1); })(0, 0);
+    const W = 680, left = 64, right = 16, rowH = 70, top = 28, gap = (W - left - right) / idx, H = top + maxD * rowH + 30, r = 18;
+    const X = x => left + (x + .5) * gap, Y = d => top + d * rowH;
+    const svg = sv('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Binary tree'});
+    for (let d = 0; d <= maxD; d++) svg.appendChild(sv('text', {class: 'depth', x: 2, y: Y(d) + 4}, `level ${d}`));
+    const gE = sv('g'), gN = sv('g'); svg.append(gE, gN);
+    this.refs = [];
+    nodes.forEach(nd => {
+      const p = pos[nd.id];
+      for (const ch of [nd.left, nd.right]) if (ch != null){ const q = pos[ch]; gE.appendChild(sv('line', {class: 'edge seen', x1: X(p.x), y1: Y(p.d), x2: X(q.x), y2: Y(q.d)})); }
+      const g = sv('g', {class: 'node'});
+      g.append(sv('circle', {class: 'halo', cx: X(p.x), cy: Y(p.d), r}), sv('circle', {cx: X(p.x), cy: Y(p.d), r}), sv('text', {x: X(p.x), y: Y(p.d)}, nd.val));
+      gN.appendChild(g); this.refs.push({id: nd.id, g});
+    });
+    box.appendChild(svg);
+  },
+  render(s){
+    const z = s.viz, inq = new Set(z.q);
+    this.refs.forEach(({id, g}) => {
+      let cls = 'node';
+      if (id === z.cur) cls += ' active';
+      else if (inq.has(id)) cls += ' inq';
+      else if (z.done[id] !== undefined){ cls += ' lvl'; g.style.setProperty('--tc', `var(${PALETTE[z.done[id] % PALETTE.length]})`); }
+      g.setAttribute('class', cls);
+    });
+  }
+};
+
+VIZ.intervals = {
+  build(v, box){
+    const rows = v.rows, m = rows.length, lo = 0, hi = Math.max(...rows.map(x => x[1])) + 1;
+    const W = 680, left = 66, right = 20, rowH = 28, top = 10, outY = top + m * rowH + 22, axisY = outY + 34, H = axisY + 24;
+    const X = t => left + (t - lo) / (hi - lo) * (W - left - right);
+    const svg = sv('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Interval timeline'});
+    const step = hi - lo > 24 ? 5 : hi - lo > 12 ? 2 : 1;
+    for (let t = lo; t <= hi; t += step){ svg.appendChild(sv('line', {class: 'axis', x1: X(t), y1: top - 4, x2: X(t), y2: axisY, opacity: .25})); svg.appendChild(sv('text', {class: 'ilabel', x: X(t), y: axisY + 16, 'text-anchor': 'middle'}, t)); }
+    svg.appendChild(sv('line', {class: 'axis', x1: left, y1: axisY, x2: W - right, y2: axisY}));
+    this.bars = rows.map(([a, b], k) => {
+      const y = top + k * rowH;
+      svg.appendChild(sv('text', {class: 'ilabel', x: 4, y: y + 13}, `[${a}, ${b}]`));
+      const rect = sv('rect', {class: 'ibar', x: X(a), y, width: Math.max(4, X(b) - X(a)), height: 18, rx: 5});
+      svg.appendChild(rect); return rect;
+    });
+    svg.appendChild(sv('text', {class: 'ilabel strong', x: 4, y: outY + 13}, 'output'));
+    this.outs = rows.map(() => { const r = sv('rect', {class: 'obar', y: outY, height: 18, rx: 5, visibility: 'hidden'}); svg.appendChild(r); return r; });
+    this.line = sv('line', {class: 'lastend', y1: top - 6, y2: outY + 24, visibility: 'hidden'});
+    this.lineT = sv('text', {class: 'lastend-t', y: outY + 34, 'text-anchor': 'middle', visibility: 'hidden'}, 'lastEnd');
+    svg.append(this.line, this.lineT);
+    this.X = X; box.appendChild(svg);
+  },
+  render(s){
+    const z = s.viz, X = this.X;
+    this.bars.forEach((b, k) => {
+      if (k === z.cur){ b.setAttribute('class', 'ibar cur'); }
+      else if (z.group[k] !== undefined){ b.setAttribute('class', 'ibar grp'); b.style.setProperty('--tc', `var(${PALETTE[z.group[k] % PALETTE.length]})`); }
+      else b.setAttribute('class', 'ibar');
+    });
+    this.outs.forEach((o, j) => {
+      const iv = z.out[j];
+      if (!iv){ o.setAttribute('visibility', 'hidden'); return; }
+      o.setAttribute('visibility', 'visible'); o.setAttribute('x', X(iv[0])); o.setAttribute('width', Math.max(4, X(iv[1]) - X(iv[0])));
+      o.style.setProperty('--tc', `var(${PALETTE[j % PALETTE.length]})`);
+    });
+    const vis = z.lastEnd != null ? 'visible' : 'hidden';
+    this.line.setAttribute('visibility', vis); this.lineT.setAttribute('visibility', vis);
+    if (z.lastEnd != null){ const x = X(z.lastEnd); this.line.setAttribute('x1', x); this.line.setAttribute('x2', x); this.lineT.setAttribute('x', x); }
+  }
+};
+
+VIZ.graph = {
+  build(v, box){
+    const n = v.n, layers = Math.max(...v.layer) + 1, cols = Array.from({length: layers}, () => []);
+    for (let c = 0; c < n; c++) cols[v.layer[c]].push(c);
+    const per = Math.max(...cols.map(c => c.length));
+    const W = 680, H = Math.max(160, per * 78 + 40), r = 20, pos = {};
+    cols.forEach((list, L) => list.forEach((c, k) => { pos[c] = {x: 50 + (L + .5) * (W - 100) / layers, y: (k + 1) * H / (list.length + 1)}; }));
+    const svg = sv('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Prerequisite graph'});
+    const defs = sv('defs');
+    for (const [id, cls] of [['ah', 'ahp'], ['ahh', 'ahh']]){
+      const mk = sv('marker', {id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse'});
+      mk.appendChild(sv('path', {d: 'M0,0 L10,5 L0,10 z', class: cls})); defs.appendChild(mk);
+    }
+    svg.appendChild(defs);
+    this.edges = v.edges.map(([a, b]) => {
+      const p = pos[a], q = pos[b], dx = q.x - p.x, dy = q.y - p.y, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
+      const path = sv('path', {class: 'gedge hidden', d: `M${p.x + ux * r},${p.y + uy * r} L${q.x - ux * (r + 3)},${q.y - uy * (r + 3)}`, 'marker-end': 'url(#ah)'});
+      svg.appendChild(path); return {a, b, path};
+    });
+    this.nodes = []; this.badges = []; this.orders = [];
+    for (let c = 0; c < n; c++){
+      const {x, y} = pos[c];
+      const g = sv('g', {class: 'node'});
+      g.append(sv('circle', {class: 'halo', cx: x, cy: y, r}), sv('circle', {cx: x, cy: y, r}), sv('text', {x, y}, c));
+      svg.appendChild(g); this.nodes.push(g);
+      const b = sv('g', {class: 'badge'}); const bt = sv('text', {x: x + 16, y: y - 16});
+      b.append(sv('circle', {cx: x + 16, cy: y - 16, r: 9}), bt); svg.appendChild(b); this.badges.push({b, bt});
+      const o = sv('text', {class: 'order', x, y: y + r + 14}); svg.appendChild(o); this.orders.push(o);
+    }
+    box.appendChild(svg);
+  },
+  render(s){
+    const z = s.viz, inq = new Set(z.q);
+    this.edges.forEach(({a, b, path}, k) => {
+      const hot = z.hot && z.hot[0] === a && z.hot[1] === b;
+      path.setAttribute('class', 'gedge' + (k >= z.built ? ' hidden' : '') + (hot ? ' hot' : ''));
+      path.setAttribute('marker-end', hot ? 'url(#ahh)' : 'url(#ah)');
+    });
+    this.nodes.forEach((g, c) => g.setAttribute('class', 'node ' + (c === z.cur ? 'active' : z.order[c] ? 'taken' : inq.has(c) ? 'inq' : '')));
+    this.badges.forEach(({b, bt}, c) => { bt.textContent = z.indeg[c]; b.setAttribute('class', 'badge' + (z.indeg[c] === 0 ? ' zero' : '')); });
+    this.orders.forEach((o, c) => { o.textContent = z.order[c] ? `#${z.order[c]}` : ''; });
+  }
+};
+
+/* ---------- state ---------- */
+let trace = null, steps = [], cur = 0, activeTag = null, viz = null;
+let lineEls = [], library = [];
+let playing = false, playTimer = null, tick = 0, voiceOn = false, speakId = 0;
+
+function loadLib(){ try { library = JSON.parse(localStorage.getItem('tracerun.lib') || '[]'); if (!Array.isArray(library)) library = []; } catch { library = []; } }
+function saveLib(){ try { localStorage.setItem('tracerun.lib', JSON.stringify(library)); } catch {} }
+function fillLibSel(id){
+  const groups = [...new Set(PROBLEMS.map(p => p.group))];
+  $('#libSel').innerHTML = groups.map(g => `<optgroup label="${esc(g)}">${PROBLEMS.filter(p => p.group === g).map(p => `<option value="${p.id}">${p.num}. ${esc(p.short || p.name)}</option>`).join('')}</optgroup>`).join('') +
+    (library.length ? `<optgroup label="Your traces">${library.map(t => `<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('')}</optgroup>` : '');
+  $('#libSel').value = id;
+  $('#delBtn').hidden = !!PROBLEMS.find(p => p.id === id);
+}
+
+function openProblem(p, text){
+  let args;
+  try { args = p.parse(text); } catch (e){ $('#err').textContent = e.message; return false; }
+  $('#err').textContent = '';
+  const t = p.build(args);
+  Object.assign(t, {id: p.id, builtin: true, title: `${p.num}. ${p.name}`, language: 'Python', input: text});
+  openTrace(t);
+  return true;
+}
+
+function openTrace(t){
+  stopPlay();
+  trace = t; steps = t.steps; activeTag = null;
+  $('#probTitle').textContent = t.title;
+  $('#probSub').textContent = t.subtitle || '';
+  $('#loader').hidden = !t.builtin;
+  if (t.builtin) $('#argIn').value = t.input;
+  $('#fileName').textContent = (t.language || 'code').toLowerCase();
+  const box = $('#code'); box.innerHTML = '';
+  lineEls = t.code.split('\n').map((src, idx) => {
+    const d = document.createElement('div'); d.className = 'ln';
+    d.innerHTML = `<span class="no">${idx + 1}</span><span class="src">${hl(src) || ' '}</span>`;
+    box.appendChild(d); return d;
+  });
+  buildTags();
+  const v = t.visual;
+  viz = v && VIZ[v.type] ? VIZ[v.type] : null;
+  $('#vizCard').hidden = !viz;
+  $('#viz').innerHTML = '';
+  if (viz){
+    $('#vizTitle').textContent = v.title || 'Visual';
+    $('#vizAside').textContent = v.aside || '';
+    $('#legend').innerHTML = (v.legend || []).map(([label, c]) => `<span style="--c:var(${c})">${esc(label)}</span>`).join('');
+    viz.build(v, $('#viz'));
+    $('#colLeft').insertBefore($('#stateCard'), $('#stackCard'));
+  } else {
+    $('#colRight').appendChild($('#stateCard'));
+  }
+  $('#stackCard').hidden = !steps.some(s => (s.stack || []).length > 1);
+  go(0);
+}
+
+function buildTags(){
+  const box = $('#tags'); box.innerHTML = '';
+  (trace.tags || []).forEach((t, k) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tag'; b.textContent = '#' + t.name;
+    b.style.setProperty('--tc', `var(${t.c})`);
+    b.setAttribute('aria-pressed', 'false');
+    b.onclick = () => selectTag(activeTag === k ? null : k);
+    box.appendChild(b);
+  });
+  if (trace.complexity){ const cx = document.createElement('span'); cx.className = 'tag cx'; cx.textContent = trace.complexity; box.appendChild(cx); }
+  selectTag(null);
+}
+function selectTag(k){
+  activeTag = k;
+  [...$('#tags').querySelectorAll('button')].forEach((b, i) => b.setAttribute('aria-pressed', String(i === k)));
+  lineEls.forEach(l => l.classList.remove('ev'));
+  if (k === null){ $('#why').textContent = (trace.tags || []).length ? 'Tap a tag to highlight the lines that give it away.' : 'No clear pattern found in this code.'; return; }
+  const t = trace.tags[k];
+  $('#code').style.setProperty('--tagc', `var(${t.c})`);
+  t.lines.forEach(n => lineEls[n - 1] && lineEls[n - 1].classList.add('ev'));
+  $('#why').innerHTML = `<b>${esc(t.name)}:</b> ${rich(t.why)}`;
+}
+
+/* ---------- rendering ---------- */
+const isPrim = v => v === null || ['number','string','boolean'].includes(typeof v);
+function show(v){
+  const py = /python/i.test(trace.language || '');
+  if (v === null) return py ? 'None' : 'null';
+  if (typeof v === 'boolean') return py ? (v ? 'True' : 'False') : String(v);
+  if (typeof v === 'string') return JSON.stringify(v);
+  if (Array.isArray(v)) return '[' + v.map(show).join(', ') + ']';
+  if (typeof v === 'object') return '{' + Object.entries(v).map(([k, x]) => `${k}: ${show(x)}`).join(', ') + '}';
+  return String(v);
+}
+
+function renderVars(s, prev){
+  let html = '';
+  for (const [name, val] of Object.entries(s.vars || {})){
+    const pv = prev && prev.vars ? prev.vars[name] : undefined;
+    const changed = !!prev && JSON.stringify(pv) !== JSON.stringify(val);
+    const note = trace.varNotes && trace.varNotes[name];
+    const goal = trace.goal && trace.goal.var === name && Array.isArray(val) ? trace.goal : null;
+    const ptrRaw = s.pointers && s.pointers[name];
+    const ptrs = ptrRaw && typeof ptrRaw === 'object' ? ptrRaw : {};
+    const grew = Array.isArray(pv) && Array.isArray(val) && val.length > pv.length;
+    let right = '', body;
+    if (goal){
+      const total = Math.max(goal.total, val.length);
+      let cells = '';
+      for (let k = 0; k < total; k++) cells += k < val.length ? `<div class="slot got${grew && k === val.length - 1 ? ' new' : ''}">${esc(show(val[k]))}</div>` : '<div class="slot">?</div>';
+      body = `<div class="slots">${cells}</div>`;
+      right = `<span class="quest">${val.length >= goal.total ? `all ${goal.total} ${esc(goal.label)}` : `${val.length} of ${goal.total} ${esc(goal.label)}`}</span>`;
+    } else if (Array.isArray(val) && val.every(isPrim)){
+      const byIdx = {};
+      for (const [lab, ix] of Object.entries(ptrs)) if (Number.isInteger(ix) && ix >= 0 && ix < val.length) (byIdx[ix] = byIdx[ix] || []).push(lab);
+      const hasPtr = Object.keys(byIdx).length > 0;
+      body = val.length
+        ? `<div class="cells${hasPtr ? ' has-ptr' : ''}">${val.map((v, k) => `<div class="cell${byIdx[k] ? ' cur' : ''}${grew && k === val.length - 1 ? ' pop' : ''}">${esc(show(v))}<span class="idx">${k}</span>${byIdx[k] ? `<span class="ptr">▲ ${esc(byIdx[k].join(', '))}</span>` : ''}</div>`).join('')}</div>`
+        : '<div class="cells"><span class="empty">[ ] empty</span></div>';
+      right = Object.entries(ptrs).filter(([, i]) => Number.isInteger(i)).map(([l, i]) => `${esc(l)} = ${i}`).join(', ');
+      if (right) right = `<span class="ptrs">${right}</span>`;
+    } else if (Array.isArray(val)){
+      body = val.length ? `<div class="chips">${val.map((v, k) => `<span class="chip${grew && k === val.length - 1 ? ' pop' : ''}">${esc(show(v))}</span>`).join('')}</div>` : '<span class="empty">[ ] empty</span>';
+    } else if (val && typeof val === 'object'){
+      const e = Object.entries(val);
+      body = e.length ? `<div class="chips">${e.map(([k, v]) => `<span class="chip"><span class="t-s">${esc(k)}:</span> ${esc(show(v))}</span>`).join('')}</div>` : '<span class="empty">{ } empty</span>';
+    } else {
+      body = `<div class="chips"><span class="chip big">${esc(show(val))}</span></div>`;
+    }
+    html += `<div class="var${changed ? ' changed' : ''}"><div class="var-name"><span><span class="vn">${esc(name)}</span>${note ? ` <span class="t-s">${esc(note)}</span>` : ''}</span>${right}</div>${body}</div>`;
+  }
+  $('#vars').innerHTML = html || '<p class="empty">No variables yet.</p>';
+}
+
+function render(){
+  const s = steps[cur], prev = steps[cur - 1];
+  document.documentElement.style.setProperty('--ph', `var(${PHASE[s.phase] || '--cyan'})`);
+  const seen = new Set(steps.slice(0, cur).map(x => x.line));
+  lineEls.forEach((el, idx) => { el.classList.toggle('active', idx + 1 === s.line); el.classList.toggle('seen', seen.has(idx + 1)); });
+  $('#phase').textContent = s.phase;
+  $('#stepno').textContent = `step ${cur + 1} of ${steps.length}`;
+  $('#bubble').textContent = s.narration || s.title;
+  $('#exTitle').textContent = s.title;
+  $('#exDesc').innerHTML = rich(s.desc || '');
+  const cond = $('#cond'); cond.hidden = !s.cond; cond.textContent = s.cond || '';
+  const note = trace.lineNotes && trace.lineNotes[s.line];
+  $('#role').innerHTML = `<strong>Line ${s.line}</strong> ${note ? rich(note) : ''}`;
+  renderVars(s, prev);
+  const st = s.stack || [];
+  $('#frames').innerHTML = st.length
+    ? [...st].reverse().map((f, k) => `<div class="frame${k === 0 ? ' top' : ''}${k === st.length - 1 && st.length > 1 ? ' root' : ''}">${esc(f)}</div>`).join('')
+    : '<span class="empty">empty</span>';
+  $('#depth').textContent = st.length ? plural(st.length, 'frame') : '';
+  if (viz && s.viz) viz.render(s);
+  const sc = $('#scrub');
+  sc.max = steps.length - 1; sc.value = cur;
+  sc.style.setProperty('--pct', (steps.length > 1 ? cur / (steps.length - 1) * 100 : 100) + '%');
+  $('#count').textContent = `${cur + 1}/${steps.length}`;
+  $('#prevBtn').disabled = cur === 0;
+  $('#nextBtn').disabled = cur === steps.length - 1;
+  $('#nextBtn').textContent = cur === steps.length - 1 ? 'Done' : 'Next';
+  const bit = $('#bit'); bit.classList.remove('hop'); void bit.getBoundingClientRect(); bit.classList.add('hop');
+}
+
+/* ---------- voice ---------- */
+const canSpeak = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+function pickVoice(){
+  const vs = speechSynthesis.getVoices();
+  return vs.find(v => /^en[-_]/i.test(v.lang) && /Samantha|Google US English|Aria|Jenny|Zira|Karen|Moira/i.test(v.name))
+      || vs.find(v => /^en[-_]US/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)) || null;
+}
+const forSpeech = t => String(t).replace(/`/g, '').replace(/\[\s*\]/g, 'an empty list').replace(/\[([^\]]*)\]/g, ' $1 ')
+  .replace(/>=/g, ' is at least ').replace(/<=/g, ' is at most ').replace(/!=/g, ' is not ').replace(/==/g, ' equals ').replace(/→/g, ', ');
+function speak(text, done){
+  const id = ++speakId, bit = $('#bit');
+  if (!voiceOn || !canSpeak){ done && done(); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(forSpeech(text));
+  const v = pickVoice(); if (v) u.voice = v;
+  u.pitch = 1.55; u.rate = 1.05;
+  let finished = false;
+  const fin = () => { if (finished) return; finished = true; if (id === speakId){ bit.classList.remove('talking'); done && done(); } };
+  u.onstart = () => { if (id === speakId) bit.classList.add('talking'); };
+  u.onend = fin; u.onerror = fin;
+  setTimeout(fin, 15000);
+  speechSynthesis.speak(u);
+}
+function setVoice(on){
+  voiceOn = on;
+  const b = $('#voiceBtn'); b.setAttribute('aria-pressed', String(on)); b.firstChild.textContent = on ? '🔊' : '🔈';
+  if (on) speak(steps[cur].narration || steps[cur].title);
+  else if (canSpeak){ speechSynthesis.cancel(); $('#bit').classList.remove('talking'); }
+}
+
+/* ---------- stepping ---------- */
+function go(k){
+  cur = Math.max(0, Math.min(steps.length - 1, k));
+  render();
+  const my = ++tick;
+  const after = () => {
+    if (!playing || my !== tick) return;
+    if (cur >= steps.length - 1){ stopPlay(); return; }
+    playTimer = setTimeout(() => go(cur + 1), voiceOn ? 250 : +$('#speed').value);
+  };
+  if (voiceOn) speak(steps[cur].narration || steps[cur].title, after); else after();
+}
+function stopPlay(){ playing = false; clearTimeout(playTimer); const b = $('#playBtn'); b.textContent = '▶︎'; b.setAttribute('aria-label', 'Play'); }
+function togglePlay(){
+  if (playing){ stopPlay(); return; }
+  playing = true; const b = $('#playBtn'); b.textContent = '❚❚'; b.setAttribute('aria-label', 'Pause');
+  go(cur >= steps.length - 1 ? 0 : cur + 1);
+}
+function step(k){ stopPlay(); go(k); }
+
+/* ---------- tracing new code with Claude ---------- */
+const samplePromise = (window.claude && typeof window.claude.use === 'function') ? window.claude.use('sample').catch(() => null) : Promise.resolve(null);
+let ctl = null;
+function status(msg, kind = ''){ const el = $('#status'); el.textContent = msg; el.className = 'status' + (kind ? ' ' + kind : ''); }
+function busy(on){ $('#traceBtn').disabled = on; $('#traceBtn').textContent = on ? 'Tracing…' : 'Trace it'; $('#stopBtn').hidden = !on; $('#codeIn').readOnly = on; $('#exIn').readOnly = on; }
+function errCopy(e){
+  switch (e && e.code){
+    case 'cancelled': return 'Stopped.';
+    case 'not_granted': return 'Claude wasn’t allowed to run, so this code can’t be traced. Allow it when asked, then trace again.';
+    case 'rate_limited': return 'Too many requests at once. Wait a minute, then trace again.';
+    case 'invalid_json': case 'bad_shape': return 'The trace came back incomplete. Try a shorter snippet or a smaller example input.';
+    case 'prompt_too_large': return 'That code is too long to trace. Trim it to one function.';
+    default: return 'Tracing failed. Try again in a moment.';
+  }
+}
+function buildPrompt(code, example){
+  const numbered = code.split('\n').map((l, i) => `${i + 1}| ${l}`).join('\n');
+  return `You are generating a step-by-step execution trace for an interactive, game-like code visualizer that helps students understand algorithms line by line.
+
+CODE (line numbers were added and are not part of the code):
+${numbered}
+
+EXAMPLE INPUT: ${example || 'none given. Choose a small input that shows the interesting behavior, and say what it is in "example".'}
+
+Rules:
+- Mentally execute the code on the example input. Record one step per executed line, in execution order, with exact values. Accuracy matters more than anything else; double-check every value.
+- Use between 12 and 70 steps. If a full run would be longer, pick a smaller input (or, if the user gave the input, trace the start and finish with a Done step that says what the rest would do).
+- Skip blank lines and comments. Use a function's def/signature line for the step where the function is entered.
+- "vars": the variables in scope AFTER the line runs, as JSON values (lists/sets as arrays, dicts as objects). At most 8 variables; leave out self and type hints.
+- "pointers": for any array variable indexed by an integer variable, map the index names to their values, e.g. {"nums": {"i": 0, "j": 3}}. Only in-range indices.
+- "stack": the call stack, outermost first, as short labels like "dfs(i=1)".
+- "phase": exactly one of Setup, Start, Enter, Check, Compare, Choose, Explore, Loop, Backtrack, Collect, Update, Return, Done.
+- "condition": for if/while/loop checks, the evaluated condition such as "2 < 3 → True"; otherwise "".
+- "explain": 1–2 plain sentences on what this line just did, using the real values. Put code in backticks.
+- "narration": at most 25 words, spoken aloud by Bit, a cheerful little robot guide. Playful and warm but accurate. Never reference existing characters, franchises, or celebrities.
+- "tags": 2 to 5 recognizable algorithm patterns or techniques in the code (for example Two pointers, Sliding window, Binary search, BFS, DFS, Backtracking, Recursion, Dynamic programming, Memoization, Greedy, Hash map, Stack, Heap, Sorting, Prefix sum, Union find, Topological sort). Each has "name", "lines" (the line numbers that show it) and "why" (one sentence, may use backticks).
+- "line_notes": for each line that runs, a short general note on what that line is for.
+- "goal": if the code fills a result collection whose final size you know, {"var": name, "total": size, "label": "collected"}; otherwise null.
+- If the text is not code, reply {"error": "a one-sentence explanation"}.
+
+Reply with only JSON in this shape:
+{"title":"short problem name","summary":"one sentence on what the code does","language":"Python","example":"the input you traced","complexity":"O(n) time, O(1) space","tags":[{"name":"Hash map","lines":[4,6],"why":"..."}],"line_notes":{"3":"..."},"var_notes":{"seen":"value → index"},"goal":null,"steps":[{"line":3,"phase":"Setup","title":"short title","explain":"...","narration":"...","condition":"","vars":{},"pointers":{},"stack":["twoSum(nums, target)"]}]}`;
+}
+function normalize(raw, code){
+  if (!raw || !Array.isArray(raw.steps) || !raw.steps.length) throw {code: 'bad_shape'};
+  const nLines = code.split('\n').length;
+  const str = (v, max) => v == null ? '' : String(v).slice(0, max);
+  const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+  const stepsOut = raw.steps.slice(0, 150).map(s => {
+    s = isObj(s) ? s : {};
+    const ph = str(s.phase, 20), phase = PHASE[ph] ? ph : 'Update';
+    return {line: Math.min(nLines, Math.max(1, parseInt(s.line, 10) || 1)), phase,
+      title: str(s.title, 90) || phase, desc: str(s.explain, 500), narration: str(s.narration, 260),
+      cond: str(s.condition, 140), vars: isObj(s.vars) ? s.vars : {}, pointers: isObj(s.pointers) ? s.pointers : {},
+      stack: Array.isArray(s.stack) ? s.stack.map(x => str(x, 80)) : []};
+  });
+  const tags = (Array.isArray(raw.tags) ? raw.tags : []).slice(0, 6).filter(isObj).map((t, k) => ({
+    name: str(t.name, 30), c: TAG_COLORS[k % TAG_COLORS.length],
+    lines: (Array.isArray(t.lines) ? t.lines : []).map(x => parseInt(x, 10)).filter(x => x >= 1 && x <= nLines),
+    why: str(t.why, 260)})).filter(t => t.name);
+  const lineNotes = {}; if (isObj(raw.line_notes)) for (const [k, v] of Object.entries(raw.line_notes)) lineNotes[parseInt(k, 10)] = str(v, 200);
+  const varNotes = {}; if (isObj(raw.var_notes)) for (const [k, v] of Object.entries(raw.var_notes)) varNotes[k] = str(v, 60);
+  let goal = null;
+  if (isObj(raw.goal) && typeof raw.goal.var === 'string' && Number.isInteger(raw.goal.total) && raw.goal.total > 0 && raw.goal.total <= 64)
+    goal = {var: raw.goal.var, total: raw.goal.total, label: str(raw.goal.label, 30) || 'collected'};
+  const sub = [str(raw.summary, 220), raw.example ? `Traced with ${str(raw.example, 140)}.` : ''].filter(Boolean).join(' ');
+  return {id: 't' + Date.now(), title: str(raw.title, 60) || 'Your code', subtitle: sub, language: str(raw.language, 20),
+    code, tags, complexity: str(raw.complexity, 60), lineNotes, varNotes, goal, steps: stepsOut, visual: null};
+}
+async function traceIt(){
+  const code = $('#codeIn').value.replace(/\t/g, '    ').replace(/\s+$/, '').replace(/^\s*\n/, '');
+  if (!code.trim()){ status('Paste some code first.', 'bad'); return; }
+  if (code.length > 8000 || code.split('\n').length > 150){ status('That’s a lot of code. Trim it to one function or solution under 150 lines.', 'bad'); return; }
+  busy(true); status('Bit is reading your code. This usually takes 20–60 seconds.', 'work');
+  const sample = await samplePromise;
+  if (!sample){ busy(false); status('Tracing new code needs Claude, which only works when this page is open in Claude.', 'bad'); return; }
+  ctl = new AbortController();
+  try {
+    const raw = await sample.json(buildPrompt(code, $('#exIn').value.trim()), {
+      signal: ctl.signal,
+      onText: ({text}) => { const k = (text.match(/"line"\s*:/g) || []).length; if (k) status(`Tracing… ${plural(k, 'step')} so far`, 'work'); }
+    });
+    if (raw && raw.error){ status(String(raw.error).slice(0, 200), 'bad'); return; }
+    const t = normalize(raw, code);
+    library.unshift(t); library = library.slice(0, 40); saveLib();
+    fillLibSel(t.id);
+    $('#compose').hidden = true; status('');
+    openTrace(t);
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  } catch (e){
+    status(errCopy(e), e && e.code === 'cancelled' ? '' : 'bad');
+  } finally { busy(false); }
+}
+
+/* ---------- wiring ---------- */
+const currentProblem = () => PROBLEMS.find(p => p.id === (trace && trace.id));
+$('#nextBtn').onclick = () => step(cur + 1);
+$('#prevBtn').onclick = () => step(cur - 1);
+$('#resetBtn').onclick = () => step(0);
+$('#playBtn').onclick = togglePlay;
+$('#scrub').oninput = e => step(+e.target.value);
+$('#loadBtn').onclick = () => { const p = currentProblem(); if (p) openProblem(p, $('#argIn').value); };
+$('#argIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('#loadBtn').click(); });
+$('#voiceBtn').onclick = () => setVoice(!voiceOn);
+if (!canSpeak) $('#voiceBtn').hidden = true;
+if (!(window.claude && typeof window.claude.use === 'function')) $('#newBtn').hidden = true;
+$('#newBtn').onclick = () => { $('#compose').hidden = false; $('#codeIn').focus(); };
+$('#closeBtn').onclick = () => { if (ctl) ctl.abort(); $('#compose').hidden = true; };
+$('#stopBtn').onclick = () => { if (ctl) ctl.abort(); };
+$('#traceBtn').onclick = traceIt;
+$('#codeIn').addEventListener('keydown', e => {
+  if (e.key === 'Tab'){ e.preventDefault(); const t = e.target, a = t.selectionStart; t.setRangeText('    ', a, t.selectionEnd, 'end'); }
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) traceIt();
+});
+$('#libSel').onchange = e => {
+  const id = e.target.value, p = PROBLEMS.find(x => x.id === id);
+  $('#delBtn').hidden = !!p; $('#err').textContent = '';
+  if (p) openProblem(p, p.input);
+  else { const t = library.find(x => x.id === id); if (t) openTrace(t); }
+};
+$('#delBtn').onclick = () => {
+  const id = $('#libSel').value;
+  library = library.filter(t => t.id !== id); saveLib();
+  fillLibSel('lc78'); openProblem(PROBLEMS[0], PROBLEMS[0].input);
+};
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, select, textarea')) return;
+  if (e.key === 'ArrowRight'){ e.preventDefault(); step(cur + 1); }
+  else if (e.key === 'ArrowLeft'){ e.preventDefault(); step(cur - 1); }
+  else if (e.key === ' '){ e.preventDefault(); togglePlay(); }
+});
+
+loadLib();
+const startP = PROBLEMS.find(p => '#' + p.id === location.hash) || PROBLEMS[0];
+fillLibSel(startP.id);
+openProblem(startP, startP.input);
+
+</script>
+</body>
+</html>
