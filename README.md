@@ -5,9 +5,9 @@ An interactive, game-like visualizer for common interview algorithms. Step throu
 ## Problems
 
 - Backtracking: 78 Subsets, 90 Subsets II, 46 Permutations, 1239 Max Length of a Concatenated String
-- Grids and graphs: 200 Number of Islands, 994 Rotting Oranges, 207 Course Schedule
+- Grids and graphs: 200 Number of Islands, 994 Rotting Oranges, 207 Course Schedule, 547 Number of Provinces
 - Trees: 102 Binary Tree Level Order Traversal
-- Intervals: 56 Merge Intervals
+- Intervals: 56 Merge Intervals, 57 Insert Interval
 
 ## Run it
 

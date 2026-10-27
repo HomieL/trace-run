@@ -112,7 +112,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .code{font-family:var(--mono);font-size:13.5px;line-height:1.95;overflow-x:auto;border-radius:10px;background:var(--panel-2);padding:8px 0}
 .ln{display:flex;border-left:3px solid transparent}
 .ln .no{flex:0 0 2.8em;text-align:right;padding-right:1em;color:var(--dim);user-select:none}
-.ln .src{white-space:pre;padding-right:1.2em}
+.ln .src{white-space:pre-wrap;overflow-wrap:anywhere;padding-right:1em;flex:1;min-width:0}
 .ln.seen .no{color:var(--muted)}
 .ln.ev{background:color-mix(in srgb,var(--tagc) 12%,transparent);border-left-color:color-mix(in srgb,var(--tagc) 60%,transparent)}
 .ln.active{background:color-mix(in srgb,var(--ph) 20%,transparent);border-left-color:var(--ph)}
@@ -149,9 +149,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .role strong{color:var(--text);font-weight:600}
 
 /* variables */
-.var{margin-bottom:14px}
-.var:last-child{margin-bottom:0}
-.var-name{font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#vars{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:12px 16px;align-items:center}
+.var{display:contents}
+.var-name{font-family:var(--mono);font-size:13px;color:var(--muted);display:flex;flex-direction:column;align-items:flex-start;gap:2px;max-width:150px}
 .var-name .vn{color:var(--text);font-weight:500}
 .var.changed .vn{color:var(--ph)}
 .var.changed .vn::after{content:" changed";font-family:var(--ui);font-size:11px;font-weight:600;margin-left:6px;padding:1px 7px;border-radius:99px;background:color-mix(in srgb,var(--ph) 18%,transparent)}
@@ -260,6 +260,15 @@ button,input,select,textarea{font:inherit;color:inherit}
 .badge.zero circle{fill:var(--mint)}
 .badge text{font-family:var(--mono);font-size:10px;font-weight:700;fill:var(--panel);text-anchor:middle;dominant-baseline:central}
 .order{font-family:var(--mono);font-size:11px;fill:var(--mint);text-anchor:middle;font-weight:700}
+.uedge{stroke:var(--border);stroke-width:2.5}
+.uedge.prov{stroke:var(--tc);stroke-width:3.5}
+.uedge.hot{stroke:var(--ph);stroke-width:4.5}
+.mcell{fill:var(--panel-2);stroke:var(--border);stroke-width:1.5}
+.mcell.one{fill:color-mix(in srgb,var(--cyan) 18%,var(--panel))}
+.mcell.row{stroke:var(--cyan);stroke-width:2}
+.mcell.probe{stroke:var(--ph);stroke-width:3.5}
+.mtext{font-family:var(--mono);font-size:12px;font-weight:700;text-anchor:middle;dominant-baseline:central;fill:var(--text)}
+.mtext.zero{fill:var(--dim);font-weight:400}
 /* dock */
 .dock{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
 .dock-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:8px}
@@ -1430,6 +1439,106 @@ function build57({intervals: input, newInterval: nin}){
       legend:[['current interval','--ph'],['newInterval','--pink'],['same color = same output block','--mint'],['marker','--amber']]}};
 }
 
+/* ================= 547. Number of Provinces ================= */
+const CODE_547 = `class Solution:
+    def findCircleNum(self, isConnected: List[List[int]]) -> int:
+        n = len(isConnected)
+        res = 0
+        visited = [False] * n
+
+        def dfs(node):
+            visited[node] = True
+            for nei in range(n):
+                if isConnected[node][nei] and not visited[nei]:
+                    dfs(nei)
+
+        for i in range(n):
+            if not visited[i]:
+                dfs(i)
+                res += 1
+
+        return res`;
+
+function build547({isConnected: M}){
+  const code = CODE_547, L = lineFinder(code), n = M.length;
+  const visited = new Array(n).fill(false), prov = new Array(n).fill(0), frames = [];
+  let res = null, hasN = false, hasV = false, scan = null, probe = null;
+  const S = recorder(() => {
+    const top = frames[frames.length - 1];
+    const vars = {};
+    if (hasN) vars.n = n;
+    if (res !== null) vars.res = res;
+    if (hasV) vars.visited = visited;
+    if (scan !== null) vars.i = scan;
+    if (top){ vars.node = top.node; if (top.nei != null) vars.nei = top.nei; }
+    const ptr = {};
+    if (top) ptr.node = top.node;
+    if (top && top.nei != null) ptr.nei = top.nei;
+    else if (!top && scan !== null) ptr.i = scan;
+    return {vars, pointers: hasV ? {visited: ptr} : {}, stack: ['findCircleNum(isConnected)', ...frames.map(f => `dfs(${f.node})`)],
+      viz: {prov, cur: top ? top.node : null, path: frames.slice(0, -1).map(f => f.node), probe, scan}};
+  });
+  hasN = true;
+  S(L('n = len(isConnected)'),'Setup','Count the cities',`n = ${n}. isConnected[a][b] is 1 when cities a and b are directly connected.`,`Hi, I’m Bit! ${n} cities. Let’s find out how many separate groups they form.`);
+  res = 0;
+  S(L('res = 0'),'Setup','No provinces yet','`res` counts provinces, groups of cities linked directly or through others.','Province counter: zero.');
+  hasV = true;
+  S(L('visited = [False]'),'Setup','Nobody visited','`visited` marks cities already assigned to a province.','No city visited yet.');
+  function dfs(node){
+    const f = {node, nei: null}; frames.push(f);
+    visited[node] = true; prov[node] = res + 1;
+    S(L('visited[node] = True'),'Enter',`Visit city ${node}`,`dfs(${node}) marks city ${node} as visited. It belongs to province ${res + 1}.`,`Hello, city ${node}! You’re part of province ${res + 1}.`);
+    for (let nei = 0; nei < n; nei++){
+      f.nei = nei; probe = [node, nei];
+      const link = M[node][nei] === 1, ok = link && !visited[nei];
+      S(L('if isConnected[node][nei]'),'Check', ok ? `${node} links to ${nei}` : nei === node ? `${nei} is city ${node} itself` : !link ? `No road ${node}–${nei}` : `${nei} already visited`,
+        ok ? `isConnected[${node}][${nei}] is 1 and city ${nei} hasn’t been visited, so explore it.` : nei === node ? `The diagonal is always 1, but city ${node} is already visited.` : !link ? `isConnected[${node}][${nei}] is 0. No direct connection.` : `There’s a connection, but city ${nei} is already in a province.`,
+        ok ? `A road to city ${nei}! Let’s go.` : nei === node ? 'That’s me. Skip!' : !link ? `No road to ${nei}.` : `Been to ${nei} already.`,
+        `isConnected[${node}][${nei}] = ${M[node][nei]}, visited[${nei}] = ${visited[nei] ? 'True' : 'False'}  →  ${ok ? 'True' : 'False'}`);
+      if (ok){
+        probe = null;
+        S(L('dfs(nei)'),'Explore',`Go to city ${nei}`,`Call \`dfs(${nei})\` to visit it and everything connected to it.`,`Following the road to city ${nei}!`);
+        dfs(nei);
+      }
+    }
+    f.nei = null; probe = null;
+    S(L('for nei in range(n)'),'Return',`dfs(${node}) is finished`,`Every possible neighbor of city ${node} has been checked, so return.`,`All of city ${node}’s roads explored. Heading back!`);
+    frames.pop();
+  }
+  for (let i = 0; i < n; i++){
+    scan = i;
+    const fresh = !visited[i];
+    S(L('if not visited[i]'),'Loop', fresh ? `City ${i} is new` : `City ${i} already counted`,
+      fresh ? `City ${i} hasn’t been visited, so it starts a new province.` : `City ${i} was reached earlier, as part of province ${prov[i]}.`,
+      fresh ? `City ${i} is unexplored. New province!` : `City ${i} already belongs to province ${prov[i]}.`, `not visited[${i}]  →  ${fresh ? 'True' : 'False'}`);
+    if (fresh){
+      S(L('=dfs(i)'),'Explore',`Explore from city ${i}`,`Call \`dfs(${i})\` to visit every city reachable from it.`,'Let’s see how far this province reaches!');
+      const keep = scan; scan = null; dfs(i); scan = keep;
+      res++;
+      S(L('res += 1'),'Collect',`res = ${res}`,`That whole connected group is province ${res}.`,`Province number ${res}, done!`);
+    }
+  }
+  scan = null;
+  S(L('return res'),'Done',`${plural(res, 'province')}`,`Every city has been checked. Return ${res}.`,`Mission complete! ${plural(res, 'province')}.`);
+  return {code, steps: S.steps, complexity:'O(n²) time, O(n) space',
+    subtitle:'Count groups of cities connected directly or indirectly. Input is an adjacency matrix.',
+    varNotes:{visited:'already in a province?'},
+    lineNotes: mkNotes(L, [
+      ['n = len(isConnected)','Number of cities.'], ['res = 0','Provinces found so far.'], ['visited = [False]','Which cities already belong to a province.'],
+      ['def dfs','Visits every city reachable from `node`.'], ['visited[node] = True','Mark this city so it’s never counted again.'],
+      ['for nei in range(n)','Check every city as a possible neighbor (one matrix row). Also where the call finishes.'],
+      ['if isConnected[node][nei]','Connected and not yet visited?'], ['dfs(nei)','Explore that city.'],
+      ['for i in range(n)','Try every city as a starting point.'], ['if not visited[i]','Unvisited means a province we haven’t counted.'],
+      ['=dfs(i)','Visit the whole province.'], ['res += 1','Count it.'], ['return res','Number of provinces.']]),
+    tags: mkTags(L, [
+      ['DFS','--cyan',['def dfs','dfs(nei)'],'each call follows a connection as deep as it goes before checking the next one.'],
+      ['Connected components','--pink',['if not visited[i]','res += 1'],'each new DFS start is one separate group, so counting starts counts provinces.'],
+      ['Adjacency matrix','--amber',['for nei in range(n)','if isConnected[node][nei]'],'neighbors come from scanning a whole matrix row, which is why it’s O(n²).'],
+      ['Visited array','--violet',['visited = [False]','visited[node] = True'],'marking cities stops the search from looping or counting a city twice.']]),
+    visual:{type:'ugraph', matrix: M, title:'Cities and isConnected', aside:'color = province; matrix row = current city',
+      legend:[['current city','--ph'],['on the DFS path','--cyan'],['province (same color)','--mint'],['cell being checked','--ph']]}};
+}
+
 /* ================= registry ================= */
 const pyJSON = s => JSON.parse(s.trim().replace(/\bNone\b/g, 'null').replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false').replace(/'/g, '"'));
 const rhs = s => s.includes('=') ? s.slice(s.indexOf('=') + 1) : s;
@@ -1477,6 +1586,14 @@ const PROBLEMS = [
       if (a.length > 7) fail('Use 7 intervals or fewer.');
       for (let j = 1; j < a.length; j++) if (a[j][0] <= a[j - 1][1]) fail('intervals must be sorted and non-overlapping, like LeetCode guarantees.');
       return {intervals: a, newInterval: b};
+    }},
+  {id:'lc547', group:'Graphs and grids', num:547, name:'Number of Provinces', input:'isConnected = [[1,1,0,0,0,0],[1,1,0,0,1,0],[0,0,1,1,0,0],[0,0,1,1,0,0],[0,1,0,0,1,0],[0,0,0,0,0,1]]', build: build547,
+    parse: t => {
+      const v = asJSON(t, 'isConnected = [[1,1,0],[1,1,0],[0,0,1]]'), n = Array.isArray(v) ? v.length : 0;
+      if (!n || !v.every(r => Array.isArray(r) && r.length === n && r.every(x => x === 0 || x === 1))) fail('isConnected must be a square matrix of 0s and 1s.');
+      if (n > 7) fail('Use 7 cities or fewer.');
+      for (let a = 0; a < n; a++){ if (v[a][a] !== 1) fail('The diagonal must be 1 (every city connects to itself).'); for (let b = 0; b < n; b++) if (v[a][b] !== v[b][a]) fail('The matrix must be symmetric: isConnected[a][b] == isConnected[b][a].'); }
+      return {isConnected: v};
     }}
 ];
 
@@ -1729,6 +1846,52 @@ VIZ.graph = {
   }
 };
 
+VIZ.ugraph = {
+  build(v, box){
+    const M = v.matrix, n = M.length, W = 680, H = 300, cx = 165, cy = 150, R = n <= 2 ? 70 : 115, r = 19;
+    const pos = Array.from({length: n}, (_, k) => { const a = -Math.PI / 2 + k * 2 * Math.PI / n; return {x: cx + R * Math.cos(a), y: cy + R * Math.sin(a)}; });
+    const svg = sv('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'City graph and adjacency matrix'});
+    this.edges = [];
+    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) if (M[a][b]){
+      const e = sv('line', {class: 'uedge', x1: pos[a].x, y1: pos[a].y, x2: pos[b].x, y2: pos[b].y}); svg.appendChild(e); this.edges.push({a, b, e});
+    }
+    this.nodes = pos.map((p, k) => { const g = sv('g', {class: 'node'}); g.append(sv('circle', {class: 'halo', cx: p.x, cy: p.y, r}), sv('circle', {cx: p.x, cy: p.y, r}), sv('text', {x: p.x, y: p.y}, k)); svg.appendChild(g); return g; });
+    const cell = Math.min(40, 250 / n), x0 = 400, y0 = (H - cell * n) / 2 + 8;
+    svg.appendChild(sv('text', {class: 'ilabel strong', x: x0, y: y0 - 26}, 'isConnected'));
+    for (let k = 0; k < n; k++){
+      svg.appendChild(sv('text', {class: 'ilabel', x: x0 + (k + .5) * cell, y: y0 - 8, 'text-anchor': 'middle'}, k));
+      svg.appendChild(sv('text', {class: 'ilabel', x: x0 - 10, y: y0 + (k + .5) * cell + 4, 'text-anchor': 'middle'}, k));
+    }
+    this.cells = M.map((row, a) => row.map((val, b) => {
+      const rect = sv('rect', {class: 'mcell' + (val ? ' one' : ''), x: x0 + b * cell + 1, y: y0 + a * cell + 1, width: cell - 2, height: cell - 2, rx: 5});
+      svg.append(rect, sv('text', {class: 'mtext' + (val ? '' : ' zero'), x: x0 + (b + .5) * cell, y: y0 + (a + .5) * cell}, val));
+      return {rect, val};
+    }));
+    box.appendChild(svg);
+  },
+  render(s){
+    const z = s.viz, path = new Set(z.path), tint = p => `var(${PALETTE[(p - 1) % PALETTE.length]})`;
+    this.nodes.forEach((g, k) => {
+      let cls = 'node';
+      if (k === z.cur) cls += ' active';
+      else if (path.has(k)) cls += ' stack';
+      else if (z.prov[k]){ cls += ' lvl'; g.style.setProperty('--tc', tint(z.prov[k])); }
+      else if (k === z.scan) cls += ' inq';
+      g.setAttribute('class', cls);
+    });
+    this.edges.forEach(({a, b, e}) => {
+      const hot = z.probe && ((z.probe[0] === a && z.probe[1] === b) || (z.probe[0] === b && z.probe[1] === a));
+      const same = z.prov[a] && z.prov[a] === z.prov[b];
+      e.setAttribute('class', 'uedge' + (hot ? ' hot' : same ? ' prov' : ''));
+      if (same) e.style.setProperty('--tc', tint(z.prov[a]));
+    });
+    this.cells.forEach((row, a) => row.forEach(({rect, val}, b) => {
+      const probe = z.probe && z.probe[0] === a && z.probe[1] === b;
+      rect.setAttribute('class', 'mcell' + (val ? ' one' : '') + (a === z.cur ? ' row' : '') + (probe ? ' probe' : ''));
+    }));
+  }
+};
+
 /* ---------- state ---------- */
 let trace = null, steps = [], cur = 0, activeTag = null, viz = null;
 let lineEls = [], library = [];
@@ -1765,7 +1928,8 @@ function openTrace(t){
   const box = $('#code'); box.innerHTML = '';
   lineEls = t.code.split('\n').map((src, idx) => {
     const d = document.createElement('div'); d.className = 'ln';
-    d.innerHTML = `<span class="no">${idx + 1}</span><span class="src">${hl(src) || ' '}</span>`;
+    const ind = src.match(/^ */)[0].length, body = src.slice(ind);
+    d.innerHTML = `<span class="no">${idx + 1}</span><span class="src" style="padding-left:${ind + 2}ch;text-indent:-2ch">${hl(body) || ' '}</span>`;
     box.appendChild(d); return d;
   });
   buildTags();
@@ -1778,10 +1942,8 @@ function openTrace(t){
     $('#vizAside').textContent = v.aside || '';
     $('#legend').innerHTML = (v.legend || []).map(([label, c]) => `<span style="--c:var(${c})">${esc(label)}</span>`).join('');
     viz.build(v, $('#viz'));
-    $('#colLeft').insertBefore($('#stateCard'), $('#stackCard'));
-  } else {
-    $('#colRight').appendChild($('#stateCard'));
   }
+  $('#colRight').appendChild($('#stateCard'));
   $('#stackCard').hidden = !steps.some(s => (s.stack || []).length > 1);
   go(0);
 }
