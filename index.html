@@ -56,7 +56,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .brand .cursor{display:inline-block;width:10px;height:20px;background:var(--cyan);animation:blink 1.1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 .lib{display:flex;gap:6px;align-items:center}
-.select{border:1px solid var(--border);background:var(--panel);border-radius:10px;height:40px;padding:0 10px;font-size:14px;max-width:240px}
+.select{-webkit-appearance:none;appearance:none;border:1px solid var(--border);background:var(--panel);border-radius:10px;height:40px;padding:0 40px 0 12px;font-size:14px;max-width:260px;cursor:pointer}
+.sel-wrap{position:relative;display:inline-flex}
+.sel-wrap::after{content:"";position:absolute;right:17px;top:50%;width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
 .ghost{border:0;background:transparent;color:var(--muted);font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .btn-new{border:1.5px solid var(--cyan);background:color-mix(in srgb,var(--cyan) 12%,transparent);color:var(--cyan);border-radius:10px;height:40px;padding:0 14px;font-weight:600;font-size:14px;cursor:pointer}
 .btn-new:hover{background:color-mix(in srgb,var(--cyan) 22%,transparent)}
@@ -242,6 +244,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ibar{fill:var(--panel-2);stroke:var(--border);stroke-width:1.5}
 .ibar.grp{fill:color-mix(in srgb,var(--tc) 30%,var(--panel));stroke:var(--tc)}
 .ibar.cur{fill:var(--ph);stroke:var(--ph)}
+.ibar.newi{fill:color-mix(in srgb,var(--pink) 22%,var(--panel));stroke:var(--pink);stroke-dasharray:5 3}
 .obar{fill:color-mix(in srgb,var(--tc) 50%,var(--panel));stroke:var(--tc);stroke-width:1.5}
 .ilabel{font-family:var(--mono);font-size:11px;fill:var(--muted)}
 .ilabel.strong{fill:var(--text);font-weight:600}
@@ -295,7 +298,7 @@ button,input,select,textarea{font:inherit;color:inherit}
     <div class="brand">trace.run<span class="cursor" aria-hidden="true"></span></div>
     <div class="lib">
       <label for="libSel" class="sr">Open a problem</label>
-      <select id="libSel" class="select"></select>
+      <span class="sel-wrap"><select id="libSel" class="select"></select></span>
       <button id="delBtn" class="ghost" type="button" hidden>Remove</button>
     </div>
     <button id="newBtn" class="btn-new" type="button">Trace your own code</button>
@@ -1311,6 +1314,122 @@ function build56({intervals: input}){
       legend:[['current interval','--ph'],['merged into output block (same color)','--mint'],['lastEnd','--amber']]}};
 }
 
+/* ================= 57. Insert Interval ================= */
+const CODE_57 = `class Solution:
+    def insert(self, intervals: List[List[int]], newInterval: List[int]) -> List[List[int]]:
+        n = len(intervals)
+        i = 0
+        res = []
+
+        while i < n and intervals[i][1] < newInterval[0]:
+            res.append(intervals[i])
+            i += 1
+
+        while i < n and newInterval[1] >= intervals[i][0]:
+            newInterval[0] = min(newInterval[0], intervals[i][0])
+            newInterval[1] = max(newInterval[1], intervals[i][1])
+            i += 1
+        res.append(newInterval)
+
+        while i < n:
+            res.append(intervals[i])
+            i += 1
+
+        return res`;
+
+function build57({intervals: input, newInterval: nin}){
+  const code = CODE_57, L = lineFinder(code);
+  const intervals = input.map(x => [...x]), rows = clone(intervals), n = intervals.length, newInterval = [...nin];
+  let i = null, res = null, cur = null, newGroup = null, mark = null, markLabel = '', hasN = false;
+  const group = {};
+  const S = recorder(() => {
+    const vars = {intervals, newInterval};
+    if (hasN) vars.n = n;
+    if (i !== null) vars.i = i;
+    if (res) vars.res = res;
+    return {vars, pointers: {}, stack: ['insert(intervals, newInterval)'],
+      viz: {cur, group, out: res || [], newIv: newInterval, newGroup, lastEnd: mark, markLabel}};
+  });
+  const iv = k => intervals[k], F = a => `[${a[0]}, ${a[1]}]`;
+  hasN = true;
+  S(L('n = len(intervals)'),'Setup','Count the intervals',`n = ${n}. The existing intervals are sorted and don’t overlap each other.`,'Hi, I’m Bit! The old intervals are already in order. We just need to slot the new one in.');
+  i = 0;
+  S(L('i = 0'),'Setup','Start at the left','`i` walks through intervals from left to right.','Starting from the left.');
+  res = [];
+  S(L('res = []'),'Setup','Make an empty result','`res` will hold the final list of intervals.','Empty result list, ready to fill.');
+
+  mark = newInterval[0]; markLabel = 'new start';
+  for (;;){
+    cur = i < n ? i : null;
+    const ok = i < n && iv(i)[1] < newInterval[0];
+    S(L('while i < n and intervals[i][1] < newInterval[0]'),'Compare',
+      i >= n ? 'No intervals left' : ok ? `${F(iv(i))} ends before ${newInterval[0]}` : `${F(iv(i))} reaches ${newInterval[0]}`,
+      i >= n ? 'Every interval ended before newInterval, so phase 1 is over.' : ok ? `It ends at ${iv(i)[1]}, before newInterval starts at ${newInterval[0]}, so they can’t overlap. It goes straight into res.` : `It ends at ${iv(i)[1]}, which is not before ${newInterval[0]}. Phase 1 is over: from here, intervals may overlap newInterval.`,
+      i >= n ? 'Nothing left to check!' : ok ? `${F(iv(i))} is totally to the left. Safe!` : `${F(iv(i))} reaches the new one. Phase one is done.`,
+      i >= n ? `${i} < ${n}  →  False` : `${iv(i)[1]} < ${newInterval[0]}  →  ${ok ? 'True' : 'False'}`);
+    if (!ok) break;
+    res.push(iv(i)); group[i] = res.length - 1;
+    S(L('res.append(intervals[i])', 1),'Collect',`Keep ${F(iv(i))}`,'Copy it into res unchanged.',`${F(iv(i))} goes in as is.`);
+    i++;
+    S(L('i += 1', 1),'Update',`i = ${i}`,'Move to the next interval.','Next!');
+  }
+
+  mark = newInterval[1]; markLabel = 'new end';
+  for (;;){
+    cur = i < n ? i : null;
+    const ok = i < n && newInterval[1] >= iv(i)[0];
+    S(L('while i < n and newInterval[1] >= intervals[i][0]'),'Compare',
+      i >= n ? 'No intervals left' : ok ? `${F(iv(i))} overlaps` : `${F(iv(i))} starts after`,
+      i >= n ? 'There are no more intervals to merge.' : ok ? `newInterval ends at ${newInterval[1]}, at or after ${F(iv(i))} starts at ${iv(i)[0]}, so they overlap and must be merged.` : `newInterval ends at ${newInterval[1]}, before ${F(iv(i))} starts at ${iv(i)[0]}. No more overlaps.`,
+      i >= n ? 'Nothing left to merge.' : ok ? `Bump! ${F(iv(i))} overlaps the new interval. Merge time!` : 'Clear gap ahead. Merging is done.',
+      i >= n ? `${i} < ${n}  →  False` : `${newInterval[1]} >= ${iv(i)[0]}  →  ${ok ? 'True' : 'False'}`);
+    if (!ok) break;
+    group[i] = res.length;
+    const o0 = newInterval[0];
+    newInterval[0] = Math.min(o0, iv(i)[0]);
+    S(L('newInterval[0] = min'),'Update',`newInterval[0] = ${newInterval[0]}`,`The merged start is min(${o0}, ${iv(i)[0]}) = ${newInterval[0]}.`, newInterval[0] < o0 ? `Stretch the start back to ${newInterval[0]}.` : `Start stays at ${newInterval[0]}.`,`min(${o0}, ${iv(i)[0]})  →  ${newInterval[0]}`);
+    const o1 = newInterval[1];
+    newInterval[1] = Math.max(o1, iv(i)[1]); mark = newInterval[1];
+    S(L('newInterval[1] = max'),'Update',`newInterval[1] = ${newInterval[1]}`,`The merged end is max(${o1}, ${iv(i)[1]}) = ${newInterval[1]}. newInterval is now \`${fmt(newInterval)}\`.`, newInterval[1] > o1 ? `Stretch the end out to ${newInterval[1]}!` : `End stays at ${newInterval[1]}.`,`max(${o1}, ${iv(i)[1]})  →  ${newInterval[1]}`);
+    i++;
+    S(L('i += 1', 2),'Update',`i = ${i}`,'This interval is swallowed by newInterval. Move on.','Gobbled up. Next!');
+  }
+  cur = null; mark = null;
+  res.push(newInterval); newGroup = res.length - 1;
+  S(L('res.append(newInterval)'),'Collect',`Insert ${F(newInterval)}`,`Add the merged newInterval, \`${fmt(newInterval)}\`, to res.`,`In goes ${F(newInterval)}!`);
+
+  for (;;){
+    cur = i < n ? i : null;
+    const ok = i < n;
+    S(L('=while i < n:'),'Check', ok ? `${F(iv(i))} is after` : 'All intervals placed', ok ? `${F(iv(i))} starts after newInterval ends, so it goes in unchanged.` : 'Every interval has been placed.', ok ? `${F(iv(i))} is safely to the right.` : 'Everyone has a spot!', `${i} < ${n}  →  ${ok ? 'True' : 'False'}`);
+    if (!ok) break;
+    res.push(iv(i)); group[i] = res.length - 1;
+    S(L('res.append(intervals[i])', 2),'Collect',`Keep ${F(iv(i))}`,'Copy it into res unchanged.',`${F(iv(i))} goes in as is.`);
+    i++;
+    S(L('i += 1', 3),'Update',`i = ${i}`,'Move to the next interval.','Next!');
+  }
+  cur = null;
+  S(L('return res'),'Done',`${plural(res.length, 'interval')}`,`Return \`${JSON.stringify(res).replace(/,\[/g, ', [')}\`.`,`Mission complete! ${plural(res.length, 'interval')}, still sorted, no overlaps.`);
+  return {code, steps: S.steps, complexity:'O(n) time, O(n) space',
+    subtitle:'Insert newInterval into sorted, non-overlapping intervals, merging where needed.',
+    lineNotes: mkNotes(L, [
+      ['n = len(intervals)','Number of existing intervals.'], ['i = 0','Index into intervals.'], ['res = []','The answer being built.'],
+      ['while i < n and intervals[i][1] < newInterval[0]','Phase 1: intervals that end before newInterval starts.'],
+      ['res.append(intervals[i])','Copy a non-overlapping interval as is.',1], ['i += 1','Advance.',1],
+      ['while i < n and newInterval[1] >= intervals[i][0]','Phase 2: intervals that overlap newInterval.'],
+      ['newInterval[0] = min','Grow newInterval to the left if needed.'], ['newInterval[1] = max','Grow newInterval to the right if needed.'], ['i += 1','Advance.',2],
+      ['res.append(newInterval)','Insert the merged interval.'],
+      ['=while i < n:','Phase 3: everything left starts after newInterval.'], ['res.append(intervals[i])','Copy a non-overlapping interval as is.',2], ['i += 1','Advance.',3],
+      ['return res','Sorted, with no overlaps.']]),
+    tags: mkTags(L, [
+      ['Intervals','--cyan',['while i < n and newInterval[1] >= intervals[i][0]'],'two intervals overlap when one starts at or before the other ends.'],
+      ['Three phases','--violet',['while i < n and intervals[i][1] < newInterval[0]','while i < n and newInterval[1] >= intervals[i][0]','=while i < n:'],'before newInterval, overlapping it, and after it. One pass, no sorting needed.'],
+      ['Merging','--mint',['newInterval[0] = min','newInterval[1] = max'],'overlapping intervals collapse into one by taking the smallest start and largest end.'],
+      ['Linear scan','--amber',['i = 0','=while i < n:'],'`i` only moves forward, so the whole thing is O(n).']]),
+    visual:{type:'intervals', rows, newRow: [...nin], title:'Timeline', aside:'input on top, newInterval in pink, output below',
+      legend:[['current interval','--ph'],['newInterval','--pink'],['same color = same output block','--mint'],['marker','--amber']]}};
+}
+
 /* ================= registry ================= */
 const pyJSON = s => JSON.parse(s.trim().replace(/\bNone\b/g, 'null').replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false').replace(/'/g, '"'));
 const rhs = s => s.includes('=') ? s.slice(s.indexOf('=') + 1) : s;
@@ -1347,7 +1466,18 @@ const PROBLEMS = [
   {id:'lc102', group:'Trees', num:102, name:'Binary Tree Level Order Traversal', short:'Level Order Traversal', input:'root = [3, 9, 20, null, null, 15, 7]', build: build102,
     parse: t => { const v = asJSON(t, 'root = [3, 9, 20, null, null, 15, 7]'); if (!Array.isArray(v) || !v.length || v[0] == null || !v.every(x => x === null || Number.isInteger(x))) fail('Use LeetCode’s format, like root = [3, 9, 20, null, null, 15, 7].'); const nodes = parseTree(v); if (nodes.length > 12) fail('Use 12 nodes or fewer.'); return {nodes}; }},
   {id:'lc56', group:'Intervals', num:56, name:'Merge Intervals', input:'intervals = [[8,10],[1,3],[15,18],[2,6],[9,12]]', build: build56,
-    parse: t => { const v = asJSON(t, 'intervals = [[1,3],[2,6]]'); if (!Array.isArray(v) || !v.length || !v.every(e => Array.isArray(e) && e.length === 2 && e.every(x => Number.isInteger(x) && x >= 0 && x <= 40) && e[0] <= e[1])) fail('Each interval is [start, end] with 0 ≤ start ≤ end ≤ 40.'); if (v.length > 7) fail('Use 7 intervals or fewer.'); return {intervals: v}; }}
+    parse: t => { const v = asJSON(t, 'intervals = [[1,3],[2,6]]'); if (!Array.isArray(v) || !v.length || !v.every(e => Array.isArray(e) && e.length === 2 && e.every(x => Number.isInteger(x) && x >= 0 && x <= 40) && e[0] <= e[1])) fail('Each interval is [start, end] with 0 ≤ start ≤ end ≤ 40.'); if (v.length > 7) fail('Use 7 intervals or fewer.'); return {intervals: v}; }},
+  {id:'lc57', group:'Intervals', num:57, name:'Insert Interval', input:'intervals = [[1,2],[3,5],[6,7],[8,10],[12,16]], newInterval = [4,8]', build: build57,
+    parse: t => {
+      const k = t.indexOf('newInterval'); if (k < 0) fail('Use this format: intervals = [[1,3],[6,9]], newInterval = [2,5]');
+      let a, b;
+      try { a = pyJSON(rhs(t.slice(0, k)).trim().replace(/,\s*$/, '')); b = pyJSON(rhs(t.slice(k))); } catch { fail('Couldn’t read that. Use: intervals = [[1,3],[6,9]], newInterval = [2,5]'); }
+      const okIv = e => Array.isArray(e) && e.length === 2 && e.every(x => Number.isInteger(x) && x >= 0 && x <= 40) && e[0] <= e[1];
+      if (!Array.isArray(a) || !a.every(okIv) || !okIv(b)) fail('Each interval is [start, end] with 0 ≤ start ≤ end ≤ 40.');
+      if (a.length > 7) fail('Use 7 intervals or fewer.');
+      for (let j = 1; j < a.length; j++) if (a[j][0] <= a[j - 1][1]) fail('intervals must be sorted and non-overlapping, like LeetCode guarantees.');
+      return {intervals: a, newInterval: b};
+    }}
 ];
 
 /* ================= DOM ================= */
@@ -1511,7 +1641,7 @@ VIZ.bintree = {
 
 VIZ.intervals = {
   build(v, box){
-    const rows = v.rows, m = rows.length, lo = 0, hi = Math.max(...rows.map(x => x[1])) + 1;
+    const rows = v.rows, all = v.newRow ? [...rows, v.newRow] : rows, m = all.length, lo = 0, hi = Math.max(...all.map(x => x[1])) + 1;
     const W = 680, left = 66, right = 20, rowH = 28, top = 10, outY = top + m * rowH + 22, axisY = outY + 34, H = axisY + 24;
     const X = t => left + (t - lo) / (hi - lo) * (W - left - right);
     const svg = sv('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Interval timeline'});
@@ -1524,8 +1654,10 @@ VIZ.intervals = {
       const rect = sv('rect', {class: 'ibar', x: X(a), y, width: Math.max(4, X(b) - X(a)), height: 18, rx: 5});
       svg.appendChild(rect); return rect;
     });
+    this.newBar = null;
+    if (v.newRow){ const y = top + rows.length * rowH; this.newLabel = sv('text', {class: 'ilabel strong', x: 4, y: y + 13}); this.newBar = sv('rect', {class: 'ibar newi', y, height: 18, rx: 5}); svg.append(this.newLabel, this.newBar); }
     svg.appendChild(sv('text', {class: 'ilabel strong', x: 4, y: outY + 13}, 'output'));
-    this.outs = rows.map(() => { const r = sv('rect', {class: 'obar', y: outY, height: 18, rx: 5, visibility: 'hidden'}); svg.appendChild(r); return r; });
+    this.outs = all.map(() => { const r = sv('rect', {class: 'obar', y: outY, height: 18, rx: 5, visibility: 'hidden'}); svg.appendChild(r); return r; });
     this.line = sv('line', {class: 'lastend', y1: top - 6, y2: outY + 24, visibility: 'hidden'});
     this.lineT = sv('text', {class: 'lastend-t', y: outY + 34, 'text-anchor': 'middle', visibility: 'hidden'}, 'lastEnd');
     svg.append(this.line, this.lineT);
@@ -1544,6 +1676,9 @@ VIZ.intervals = {
       o.setAttribute('visibility', 'visible'); o.setAttribute('x', X(iv[0])); o.setAttribute('width', Math.max(4, X(iv[1]) - X(iv[0])));
       o.style.setProperty('--tc', `var(${PALETTE[j % PALETTE.length]})`);
     });
+    if (this.newBar){ const nv = z.newIv; this.newBar.setAttribute('x', X(nv[0])); this.newBar.setAttribute('width', Math.max(4, X(nv[1]) - X(nv[0]))); this.newLabel.textContent = `[${nv[0]}, ${nv[1]}]`;
+      if (z.newGroup != null){ this.newBar.setAttribute('class', 'ibar grp'); this.newBar.style.setProperty('--tc', `var(${PALETTE[z.newGroup % PALETTE.length]})`); } else this.newBar.setAttribute('class', 'ibar newi'); }
+    this.lineT.textContent = z.markLabel || 'lastEnd';
     const vis = z.lastEnd != null ? 'visible' : 'hidden';
     this.line.setAttribute('visibility', vis); this.lineT.setAttribute('visibility', vis);
     if (z.lastEnd != null){ const x = X(z.lastEnd); this.line.setAttribute('x1', x); this.line.setAttribute('x2', x); this.lineT.setAttribute('x', x); }
